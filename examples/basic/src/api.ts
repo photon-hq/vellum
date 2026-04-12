@@ -1,4 +1,4 @@
-import type { ExampleType } from "./types.js";
+import type { ExampleType } from './types.js'
 
 /**
  * Fetch a user by id.
@@ -20,6 +20,6 @@ export function fetchUser(
   id: string,
   opts?: { signal?: AbortSignal },
 ): Promise<ExampleType | null> {
-  void opts;
-  return Promise.resolve(null);
+  void opts
+  return Promise.resolve(null)
 }

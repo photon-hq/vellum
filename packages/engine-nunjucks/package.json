@@ -1,15 +1,20 @@
 {
   "name": "@vellum-docs/engine-nunjucks",
-  "version": "0.0.0",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qwerzl/vellum-docs.git",
+    "directory": "packages/engine-nunjucks"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist",
     "partials"
@@ -26,10 +31,5 @@
   "devDependencies": {
     "@types/nunjucks": "^3.2.6",
     "typescript": "^5.6.3"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/qwerzl/vellum-docs.git",
-    "directory": "packages/engine-nunjucks"
   }
 }

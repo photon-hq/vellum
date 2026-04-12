@@ -8,16 +8,16 @@
  */
 export interface ExampleType {
   /** Stable identifier. */
-  id: string;
+  id: string
   /** Display name. */
-  name: string;
+  name: string
   /** Primary contact email. */
-  email: string;
+  email: string
   /** Whether the account has been verified. */
-  verified?: boolean;
+  verified?: boolean
 }
 
 /**
  * Supported authentication methods.
  */
-export type AuthMethod = "password" | "oauth" | "sso";
+export type AuthMethod = 'password' | 'oauth' | 'sso'

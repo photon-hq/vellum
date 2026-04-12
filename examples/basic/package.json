@@ -1,18 +1,18 @@
 {
   "name": "vellum-example-basic",
+  "type": "module",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "build": "vellum build"
   },
   "dependencies": {
+    "@microsoft/tsdoc": "^0.15.1",
     "@vellum-docs/cli": "workspace:*",
     "@vellum-docs/core": "workspace:*",
     "@vellum-docs/engine-nunjucks": "workspace:*",
     "@vellum-docs/extractor-typescript": "workspace:*",
     "@vellum-docs/profile-markdown": "workspace:*",
-    "@vellum-docs/profile-mintlify": "workspace:*",
-    "@microsoft/tsdoc": "^0.15.1"
+    "@vellum-docs/profile-mintlify": "workspace:*"
   }
 }

@@ -1,4 +1,4 @@
-import type { CreatePostInput, Page, Post, User } from "../types.js";
+import type { CreatePostInput, Page, Post, User } from '../types.js'
 
 /**
  * Fetch a user by id.
@@ -20,9 +20,9 @@ export async function getUser(
   id: string,
   opts?: { signal?: AbortSignal },
 ): Promise<User | null> {
-  void id;
-  void opts;
-  return null;
+  void id
+  void opts
+  return null
 }
 
 /**
@@ -46,12 +46,12 @@ export async function getUser(
  */
 export async function listPosts(params: {
   /** Maximum items per page. */
-  limit?: number;
+  limit?: number
   /** Cursor from a previous page's `nextCursor`. */
-  cursor?: string | null;
+  cursor?: string | null
 }): Promise<Page<Post>> {
-  void params;
-  return { items: [], nextCursor: null, total: 0 };
+  void params
+  return { items: [], nextCursor: null, total: 0 }
 }
 
 /**
@@ -62,11 +62,11 @@ export async function listPosts(params: {
  */
 export async function listPostsByAuthor(
   authorId: string,
-  params: { limit?: number; cursor?: string | null },
+  params: { limit?: number, cursor?: string | null },
 ): Promise<Page<Post>> {
-  void authorId;
-  void params;
-  return { items: [], nextCursor: null, total: 0 };
+  void authorId
+  void params
+  return { items: [], nextCursor: null, total: 0 }
 }
 
 /**
@@ -77,6 +77,6 @@ export async function listPostsByAuthor(
  * @throws If the slug already exists for this author.
  */
 export async function createPost(input: CreatePostInput): Promise<Post> {
-  void input;
-  throw new Error("not implemented");
+  void input
+  throw new Error('not implemented')
 }

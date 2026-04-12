@@ -1,11 +1,15 @@
-import {
+import type {
   DocBlock,
-  DocCodeSpan,
   DocComment,
+  DocNode,
+} from '@microsoft/tsdoc'
+import type { Example, DocComment as VellumDoc } from '@vellum-docs/core'
+
+import {
+  DocCodeSpan,
   DocExcerpt,
   DocFencedCode,
   DocLinkTag,
-  DocNode,
   DocNodeKind,
   DocParagraph,
   DocPlainText,
@@ -15,188 +19,203 @@ import {
   TSDocParser,
   TSDocTagDefinition,
   TSDocTagSyntaxKind,
-} from "@microsoft/tsdoc";
+} from '@microsoft/tsdoc'
+import { emptyDocComment } from '@vellum-docs/core'
 
-import type { DocComment as VellumDoc, Example } from "@vellum-docs/core";
-import { emptyDocComment } from "@vellum-docs/core";
+const RE_TRAILING_WHITESPACE = /\s*$/
 
 // Start from the default TSDoc config (which already knows @example, @internal,
 // @beta, @public, @deprecated, @param, @returns, @remarks, @see, etc.) and add
 // any missing custom tags we want to tolerate without emitting warnings.
-const tsdocConfig = new TSDocConfiguration();
+const tsdocConfig = new TSDocConfiguration()
 const definedTagNames = new Set(
-  tsdocConfig.tagDefinitions.map((t) => t.tagName.toLowerCase()),
-);
-for (const name of ["@category"]) {
-  if (definedTagNames.has(name.toLowerCase())) continue;
+  tsdocConfig.tagDefinitions.map(t => t.tagName.toLowerCase()),
+)
+for (const name of ['@category']) {
+  if (definedTagNames.has(name.toLowerCase()))
+    continue
   tsdocConfig.addTagDefinition(
     new TSDocTagDefinition({
       tagName: name,
       syntaxKind: TSDocTagSyntaxKind.ModifierTag,
     }),
-  );
+  )
 }
 
-const parser = new TSDocParser(tsdocConfig);
+const parser = new TSDocParser(tsdocConfig)
 
 /** Recursively collect plain text from a TSDoc DocNode tree. */
-const nodeText = (node: DocNode): string => {
+function nodeText(node: DocNode): string {
   if (node instanceof DocExcerpt) {
-    return node.content.toString();
+    return node.content.toString()
   }
-  let out = "";
+  let out = ''
   for (const child of node.getChildNodes()) {
-    out += nodeText(child);
+    out += nodeText(child)
   }
-  return out;
-};
+  return out
+}
 
 /** Render a DocNode subtree as markdown (preserving paragraph breaks). */
-const nodeMarkdown = (node: DocNode): string => {
-  if (node instanceof DocPlainText) return node.text;
-  if (node instanceof DocSoftBreak) return " ";
-  if (node instanceof DocCodeSpan) return "`" + node.code + "`";
+function nodeMarkdown(node: DocNode): string {
+  if (node instanceof DocPlainText)
+    return node.text
+  if (node instanceof DocSoftBreak)
+    return ' '
+  if (node instanceof DocCodeSpan)
+    return `\`${node.code}\``
   if (node instanceof DocLinkTag) {
     // {@link Foo} or {@link Foo | alt text}
     if (node.codeDestination) {
-      const parts = node.codeDestination.memberReferences.map((r) =>
-        r.memberIdentifier ? r.memberIdentifier.identifier : "",
-      );
-      const target = parts.filter(Boolean).join(".");
-      return "`" + (node.linkText || target) + "`";
+      const parts = node.codeDestination.memberReferences.map(r =>
+        r.memberIdentifier ? r.memberIdentifier.identifier : '',
+      )
+      const target = parts.filter(Boolean).join('.')
+      return `\`${node.linkText || target}\``
     }
     if (node.urlDestination) {
-      return `[${node.linkText || node.urlDestination}](${node.urlDestination})`;
+      return `[${node.linkText || node.urlDestination}](${node.urlDestination})`
     }
-    return node.linkText ?? "";
+    return node.linkText ?? ''
   }
   if (node instanceof DocFencedCode) {
-    return "```" + (node.language || "") + "\n" + node.code.replace(/\s*$/, "") + "\n```";
+    return `\`\`\`${node.language || ''}\n${node.code.replace(RE_TRAILING_WHITESPACE, '')}\n\`\`\``
   }
   if (node instanceof DocParagraph) {
-    let out = "";
-    for (const child of node.getChildNodes()) out += nodeMarkdown(child);
-    return out.trim();
+    let out = ''
+    for (const child of node.getChildNodes()) out += nodeMarkdown(child)
+    return out.trim()
   }
   if (node instanceof DocSection) {
-    const parts: string[] = [];
+    const parts: string[] = []
     for (const child of node.getChildNodes()) {
-      const rendered = nodeMarkdown(child);
-      if (rendered) parts.push(rendered);
+      const rendered = nodeMarkdown(child)
+      if (rendered)
+        parts.push(rendered)
     }
-    return parts.join("\n\n");
+    return parts.join('\n\n')
   }
-  let out = "";
-  for (const child of node.getChildNodes()) out += nodeMarkdown(child);
-  return out;
-};
+  let out = ''
+  for (const child of node.getChildNodes()) out += nodeMarkdown(child)
+  return out
+}
 
 /** Recursively find the first DocFencedCode in a subtree. */
-const findFencedCode = (node: DocNode): DocFencedCode | null => {
-  if (node instanceof DocFencedCode) return node;
+function findFencedCode(node: DocNode): DocFencedCode | null {
+  if (node instanceof DocFencedCode)
+    return node
   for (const child of node.getChildNodes()) {
-    const found = findFencedCode(child);
-    if (found) return found;
+    const found = findFencedCode(child)
+    if (found)
+      return found
   }
-  return null;
-};
+  return null
+}
 
-const blockMarkdown = (block: DocBlock | undefined): string => {
-  if (!block) return "";
-  return nodeMarkdown(block.content).trim();
-};
+function blockMarkdown(block: DocBlock | undefined): string {
+  if (!block)
+    return ''
+  return nodeMarkdown(block.content).trim()
+}
 
-const parseExampleBlock = (block: DocBlock): Example => {
-  const fenced = findFencedCode(block.content);
+function parseExampleBlock(block: DocBlock): Example {
+  const fenced = findFencedCode(block.content)
   if (fenced) {
     return {
       title: null,
-      lang: fenced.language || "ts",
-      code: fenced.code.replace(/\s*$/, ""),
+      lang: fenced.language || 'ts',
+      code: fenced.code.replace(RE_TRAILING_WHITESPACE, ''),
       description: null,
-    };
+    }
   }
   // No fenced code — treat the whole block as the code body.
   return {
     title: null,
-    lang: "ts",
+    lang: 'ts',
     code: blockMarkdown(block),
     description: null,
-  };
-};
+  }
+}
 
-export const parseTSDoc = (raw: string): VellumDoc => {
-  if (!raw.trim()) return emptyDocComment();
+export function parseTSDoc(raw: string): VellumDoc {
+  if (!raw.trim())
+    return emptyDocComment()
 
-  const ctx = parser.parseString(raw);
-  const comment: DocComment = ctx.docComment;
+  const ctx = parser.parseString(raw)
+  const comment: DocComment = ctx.docComment
 
-  const result: VellumDoc = emptyDocComment();
-  result.raw = raw;
+  const result: VellumDoc = emptyDocComment()
+  result.raw = raw
 
   // Summary = first paragraph of summary section; description = remainder.
-  const summaryChildren = comment.summarySection.getChildNodes();
-  const summaryParts: string[] = [];
-  const descriptionParts: string[] = [];
-  let seenFirst = false;
+  const summaryChildren = comment.summarySection.getChildNodes()
+  const summaryParts: string[] = []
+  const descriptionParts: string[] = []
+  let seenFirst = false
   for (const child of summaryChildren) {
-    const md = nodeMarkdown(child);
-    if (!md) continue;
+    const md = nodeMarkdown(child)
+    if (!md)
+      continue
     if (!seenFirst) {
-      summaryParts.push(md);
-      seenFirst = true;
-    } else {
-      descriptionParts.push(md);
+      summaryParts.push(md)
+      seenFirst = true
+    }
+    else {
+      descriptionParts.push(md)
     }
   }
-  result.summary = summaryParts.join("\n\n").trim();
+  result.summary = summaryParts.join('\n\n').trim()
 
   // @remarks block (if present) becomes part of description.
-  const remarks = blockMarkdown(comment.remarksBlock);
-  if (remarks) descriptionParts.push(remarks);
-  result.description = descriptionParts.join("\n\n").trim();
+  const remarks = blockMarkdown(comment.remarksBlock)
+  if (remarks)
+    descriptionParts.push(remarks)
+  result.description = descriptionParts.join('\n\n').trim()
 
   // @param blocks.
   for (const p of comment.params.blocks) {
-    result.params[p.parameterName] = blockMarkdown(p);
+    result.params[p.parameterName] = blockMarkdown(p)
   }
 
   // @returns
   if (comment.returnsBlock) {
-    result.returns = blockMarkdown(comment.returnsBlock);
+    result.returns = blockMarkdown(comment.returnsBlock)
   }
 
   // @deprecated
   if (comment.deprecatedBlock) {
-    result.deprecated = { reason: blockMarkdown(comment.deprecatedBlock) };
+    result.deprecated = { reason: blockMarkdown(comment.deprecatedBlock) }
   }
 
   // @see blocks — take plain text of each.
   for (const block of comment.seeBlocks) {
-    const txt = blockMarkdown(block);
-    if (txt) result.see.push(txt);
+    const txt = blockMarkdown(block)
+    if (txt)
+      result.see.push(txt)
   }
 
   // Custom blocks: @example and others.
   for (const block of comment.customBlocks) {
-    const name = block.blockTag.tagName;
-    if (name === "@example") {
-      result.examples.push(parseExampleBlock(block));
-    } else {
-      const key = name;
-      const list = result.customTags[key] ?? [];
-      list.push(blockMarkdown(block));
-      result.customTags[key] = list;
+    const name = block.blockTag.tagName
+    if (name === '@example') {
+      result.examples.push(parseExampleBlock(block))
+    }
+    else {
+      const key = name
+      const list = result.customTags[key] ?? []
+      list.push(blockMarkdown(block))
+      result.customTags[key] = list
     }
   }
 
   // Modifier tags: @beta, @internal, @public, etc. — record as customTags keys.
   for (const tag of comment.modifierTagSet.nodes) {
-    const name = tag.tagName;
-    if (!(name in result.customTags)) result.customTags[name] = [];
+    const name = tag.tagName
+    if (!(name in result.customTags))
+      result.customTags[name] = []
   }
 
-  return result;
-};
+  return result
+}
 
-export { DocNodeKind, nodeText };
+export { DocNodeKind, nodeText }

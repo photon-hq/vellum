@@ -54,20 +54,20 @@ pnpm add @vellum-docs/cli @vellum-docs/core @vellum-docs/extractor-typescript \
 
 ```ts
 // vellum.config.ts
-import type { VellumConfig } from "@vellum-docs/core";
-import { NunjucksEngine }     from "@vellum-docs/engine-nunjucks";
-import { TypeScriptExtractor } from "@vellum-docs/extractor-typescript";
-import { MarkdownProfile }     from "@vellum-docs/profile-markdown";
+import type { VellumConfig } from '@vellum-docs/core'
+import { NunjucksEngine } from '@vellum-docs/engine-nunjucks'
+import { TypeScriptExtractor } from '@vellum-docs/extractor-typescript'
+import { MarkdownProfile } from '@vellum-docs/profile-markdown'
 
 export default {
   root: import.meta.dirname,
-  sources: { ts: { include: ["src"] } },
-  templates: "docs-src",
-  outDir: "docs",
+  sources: { ts: { include: ['src'] } },
+  templates: 'docs-src',
+  outDir: 'docs',
   extractors: [new TypeScriptExtractor()],
   engine: new NunjucksEngine(),
   profile: new MarkdownProfile(),
-} satisfies VellumConfig;
+} satisfies VellumConfig
 ```
 
 ### 3. Write a template
@@ -232,11 +232,11 @@ To write a custom profile, implement the `RendererProfile` interface from
 `@vellum-docs/core`:
 
 ```ts
-import type { RendererProfile, RenderContext, Symbol, TypeString } from "@vellum-docs/core";
+import type { RenderContext, RendererProfile, Symbol, TypeString } from '@vellum-docs/core'
 
 export class MyProfile implements RendererProfile {
-  readonly name = "my-host";
-  readonly targetExtensions = [".mdx"] as const;
+  readonly name = 'my-host'
+  readonly targetExtensions = ['.mdx'] as const
 
   typeRef(sym: Symbol, ctx: RenderContext): string { /* ... */ }
   signature(sym: Symbol, ctx: RenderContext): string { /* ... */ }
@@ -252,11 +252,11 @@ To add a new language, implement the `Extractor` interface from
 `@vellum-docs/core`:
 
 ```ts
-import type { Extractor, ExtractInput, Symbol } from "@vellum-docs/core";
+import type { ExtractInput, Extractor, Symbol } from '@vellum-docs/core'
 
 export class PythonExtractor implements Extractor {
-  readonly language = "py";
-  readonly extensions = [".py"] as const;
+  readonly language = 'py'
+  readonly extensions = ['.py'] as const
 
   async extract(input: ExtractInput): Promise<Symbol[]> {
     // Parse files in input.files, return Symbol records.

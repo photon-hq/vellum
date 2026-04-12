@@ -18,17 +18,17 @@
  */
 export interface User {
   /** Stable identifier. Opaque — do not parse. */
-  id: string;
+  id: string
   /** Display name shown in the UI. */
-  name: string;
+  name: string
   /** Primary contact email. Must be unique across the system. */
-  email: string;
+  email: string
   /** Access level for authorization checks. */
-  role: UserRole;
+  role: UserRole
   /** When the account was created. */
-  createdAt: Date;
+  createdAt: Date
   /** Whether the email has been verified via the sign-up flow. */
-  verified?: boolean;
+  verified?: boolean
 }
 
 /**
@@ -39,21 +39,21 @@ export interface User {
  */
 export interface Post {
   /** Stable identifier. */
-  id: string;
+  id: string
   /** Short URL-friendly identifier. Unique within the author's posts. */
-  slug: string;
+  slug: string
   /** Post title. */
-  title: string;
+  title: string
   /** Markdown body. */
-  body: string;
+  body: string
   /** Author — references {@link User} by id. */
-  authorId: string;
+  authorId: string
   /** Current lifecycle state. */
-  status: PostStatus;
+  status: PostStatus
   /** When the post was created. */
-  createdAt: Date;
+  createdAt: Date
   /** When the post was most recently updated, or `null` if never edited. */
-  updatedAt: Date | null;
+  updatedAt: Date | null
 }
 
 /**
@@ -62,22 +62,22 @@ export interface Post {
  */
 export interface CreatePostInput {
   /** URL-friendly identifier; must be unique within the author's posts. */
-  slug: string;
+  slug: string
   /** Post title. */
-  title: string;
+  title: string
   /** Markdown body. */
-  body: string;
+  body: string
 }
 
 /**
  * Access levels available to a {@link User}.
  */
-export type UserRole = "admin" | "author" | "reader";
+export type UserRole = 'admin' | 'author' | 'reader'
 
 /**
  * Lifecycle states for a {@link Post}.
  */
-export type PostStatus = "draft" | "published" | "archived";
+export type PostStatus = 'draft' | 'published' | 'archived'
 
 /**
  * Generic paginated response envelope returned by list endpoints.
@@ -90,9 +90,9 @@ export type PostStatus = "draft" | "published" | "archived";
  */
 export interface Page<T> {
   /** The items in this page. */
-  items: T[];
+  items: T[]
   /** Cursor to request the next page, or `null` if this is the last page. */
-  nextCursor: string | null;
+  nextCursor: string | null
   /** Total number of items across all pages, if known. */
-  total: number | null;
+  total: number | null
 }

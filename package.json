@@ -2,21 +2,25 @@
   "name": "vellum-monorepo",
   "version": "0.0.0",
   "private": true,
-  "description": "Vellum — a language-agnostic documentation preprocessor",
   "packageManager": "pnpm@9.12.0",
+  "description": "Vellum — a language-agnostic documentation preprocessor",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "turbo run build",
     "clean": "turbo run clean",
     "typecheck": "turbo run typecheck",
     "example": "turbo run build --filter=vellum-example-basic",
-    "example:nextjs": "turbo run docs:build --filter=vellum-example-nextjs"
+    "example:nextjs": "turbo run docs:build --filter=vellum-example-nextjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^8.1.1",
     "@types/node": "^22.7.4",
+    "eslint": "^10.2.0",
     "turbo": "^2.3.0",
     "typescript": "^5.6.3"
-  },
-  "engines": {
-    "node": ">=20"
   }
 }

@@ -233,141 +233,141 @@ The symbol model is the contract every extractor must satisfy and every
 template reads from. Changing it is a breaking change for templates.
 
 ```ts
-type SymbolId = string; // e.g. "ts:src/types.ts#ExampleType"
+type SymbolId = string // e.g. "ts:src/types.ts#ExampleType"
 
 interface Symbol {
-  id: SymbolId;
-  name: string;
-  kind: SymbolKind;
-  language: "ts" | "js" | "py" | "rust" | string;
+  id: SymbolId
+  name: string
+  kind: SymbolKind
+  language: 'ts' | 'js' | 'py' | 'rust' | string
 
-  module: string;           // logical module path, relative to config root
-  source: SourceLocation;   // file, line, column — 1-based
-  visibility: "public" | "protected" | "private" | "internal";
-  exported: boolean;
+  module: string // logical module path, relative to config root
+  source: SourceLocation // file, line, column — 1-based
+  visibility: 'public' | 'protected' | 'private' | 'internal'
+  exported: boolean
 
-  signature: string;              // pretty-printed declaration, as-written
-  signatureResolved?: string;     // generics/aliases expanded, when different
-  typeRefs: TypeRef[];            // ranges in `signature` that link to other SymbolIds
+  signature: string // pretty-printed declaration, as-written
+  signatureResolved?: string // generics/aliases expanded, when different
+  typeRefs: TypeRef[] // ranges in `signature` that link to other SymbolIds
 
-  doc: DocComment;
-  tags: string[];                 // flat: "deprecated", "beta", "public", ...
+  doc: DocComment
+  tags: string[] // flat: "deprecated", "beta", "public", ...
 
   // kind-specific — optional top-level fields, not a tagged union
-  parameters?: Parameter[];       // functions, methods, constructors
-  signatures?: Signature[];       // overloaded fns/methods; supersedes the above
-  returnType?: TypeString;
+  parameters?: Parameter[] // functions, methods, constructors
+  signatures?: Signature[] // overloaded fns/methods; supersedes the above
+  returnType?: TypeString
 
-  typeParameters?: TypeParameter[];
+  typeParameters?: TypeParameter[]
 
-  members?: Member[];             // interfaces, type aliases, classes, enums
-  extends?: TypeString[];
-  implements?: TypeString[];
-  aliasOf?: TypeString;           // type aliases — the RHS
+  members?: Member[] // interfaces, type aliases, classes, enums
+  extends?: TypeString[]
+  implements?: TypeString[]
+  aliasOf?: TypeString // type aliases — the RHS
 
-  valueType?: TypeString;         // const/var — the annotated type
-  value?: Literal | null;         // const/var — statically resolved literal
-  mutable?: boolean;
+  valueType?: TypeString // const/var — the annotated type
+  value?: Literal | null // const/var — statically resolved literal
+  mutable?: boolean
 
-  variants?: EnumVariant[];
+  variants?: EnumVariant[]
 
-  extra?: Record<string, unknown>; // language-specific escape hatch
+  extra?: Record<string, unknown> // language-specific escape hatch
 }
 
 interface DocComment {
-  raw: string;
-  summary: string;                 // first paragraph, markdown
-  description: string;             // body after summary, markdown
-  params: Record<string, string>;  // paramName → markdown description
-  returns: string | null;
-  examples: Example[];
-  throws: { type: TypeString; description: string }[];
-  see: string[];
-  deprecated: { reason: string } | null;
-  since: string | null;
-  customTags: Record<string, string[]>; // @internal, @beta, @category, ...
+  raw: string
+  summary: string // first paragraph, markdown
+  description: string // body after summary, markdown
+  params: Record<string, string> // paramName → markdown description
+  returns: string | null
+  examples: Example[]
+  throws: { type: TypeString, description: string }[]
+  see: string[]
+  deprecated: { reason: string } | null
+  since: string | null
+  customTags: Record<string, string[]> // @internal, @beta, @category, ...
 }
 
 interface Example {
-  title: string | null;
-  lang: string;
-  code: string;
-  description: string | null;
+  title: string | null
+  lang: string
+  code: string
+  description: string | null
 }
 
 interface TypeString {
-  text: string;                    // pretty-printed type, source syntax
-  refs: TypeRef[];                 // positions linking to known SymbolIds
+  text: string // pretty-printed type, source syntax
+  refs: TypeRef[] // positions linking to known SymbolIds
 }
 
 interface TypeRef {
-  start: number;                   // offset within the enclosing string
-  end: number;
-  symbolId: SymbolId;
+  start: number // offset within the enclosing string
+  end: number
+  symbolId: SymbolId
 }
 
 interface Parameter {
-  name: string;
-  type: TypeString;
-  optional: boolean;
-  rest: boolean;
-  defaultValue: Literal | null;
-  doc: string;                     // from @param
+  name: string
+  type: TypeString
+  optional: boolean
+  rest: boolean
+  defaultValue: Literal | null
+  doc: string // from @param
 }
 
-interface Signature {              // one per overload
-  parameters: Parameter[];
-  returnType: TypeString;
-  typeParameters: TypeParameter[];
-  doc: DocComment;
+interface Signature { // one per overload
+  parameters: Parameter[]
+  returnType: TypeString
+  typeParameters: TypeParameter[]
+  doc: DocComment
 }
 
 interface TypeParameter {
-  name: string;
-  constraint: TypeString | null;
-  default: TypeString | null;
+  name: string
+  constraint: TypeString | null
+  default: TypeString | null
 }
 
 interface Member {
-  name: string;
-  kind: "property" | "method" | "constructor" | "index" | "call";
-  signature: string;
-  type: TypeString;
-  optional: boolean;
-  readonly: boolean;
-  visibility: "public" | "protected" | "private";
-  static: boolean;
-  doc: DocComment;
+  name: string
+  kind: 'property' | 'method' | 'constructor' | 'index' | 'call'
+  signature: string
+  type: TypeString
+  optional: boolean
+  readonly: boolean
+  visibility: 'public' | 'protected' | 'private'
+  static: boolean
+  doc: DocComment
 }
 
 interface EnumVariant {
-  name: string;
-  value: Literal | null;
-  doc: DocComment;
+  name: string
+  value: Literal | null
+  doc: DocComment
 }
 
 interface Literal {
   kind:
-    | "string" | "number" | "boolean" | "bigint"
-    | "null" | "undefined" | "object" | "array" | "expression";
-  text: string;                    // source form, always present
-  value?: string | number | boolean; // parsed form, for primitives only
+    | 'string' | 'number' | 'boolean' | 'bigint'
+    | 'null' | 'undefined' | 'object' | 'array' | 'expression'
+  text: string // source form, always present
+  value?: string | number | boolean // parsed form, for primitives only
 }
 
 interface SourceLocation {
-  file: string;                    // relative to repo root
-  line: number;                    // 1-based
-  column: number;
-  endLine: number;
-  endColumn: number;
+  file: string // relative to repo root
+  line: number // 1-based
+  column: number
+  endLine: number
+  endColumn: number
 }
 
-type SymbolKind =
-  | "function" | "method" | "constructor"
-  | "class" | "interface" | "type" | "enum" | "namespace" | "module"
-  | "const" | "variable" | "property"
-  | "parameter" | "typeParameter"
-  | "unknown";
+type SymbolKind
+  = | 'function' | 'method' | 'constructor'
+    | 'class' | 'interface' | 'type' | 'enum' | 'namespace' | 'module'
+    | 'const' | 'variable' | 'property'
+    | 'parameter' | 'typeParameter'
+    | 'unknown'
 ```
 
 ### SymbolId format
@@ -398,15 +398,15 @@ Every language extractor implements the same interface:
 
 ```ts
 interface Extractor {
-  language: string;                          // "ts", "py", "rust", ...
-  extensions: string[];                      // [".ts", ".tsx", ".mts", ...]
-  extract(input: ExtractInput): Promise<Symbol[]>;
+  language: string // "ts", "py", "rust", ...
+  extensions: string[] // [".ts", ".tsx", ".mts", ...]
+  extract: (input: ExtractInput) => Promise<symbol[]>
 }
 
 interface ExtractInput {
-  files: string[];                           // absolute paths
-  root: string;                              // project root for module-path resolution
-  config: unknown;                           // language-specific config slice
+  files: string[] // absolute paths
+  root: string // project root for module-path resolution
+  config: unknown // language-specific config slice
 }
 ```
 
