@@ -16,7 +16,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "changeset": "changeset",
-    "version": "changeset version && pnpm install --no-frozen-lockfile",
+    "version-packages": "changeset version && pnpm install --no-frozen-lockfile",
     "release": "turbo run build --filter='./packages/*' && changeset publish"
   },
   "devDependencies": {
