@@ -1,0 +1,29 @@
+# API
+
+{% set fn = symbol("ts:src/api.ts#fetchUser") %}
+
+## {{ fn.name }}
+
+{{ fn.doc.summary }}
+
+{{ fn | mdxSignature | safe }}
+
+{% if fn.parameters.length > 0 %}
+**Parameters**
+
+{% for p in fn.parameters -%}
+- **`{{ p.name }}`**{% if p.optional %} _(optional)_{% endif %} — `{{ p.type.text }}`{% if p.doc %} — {{ p.doc }}{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if fn.returnType.text %}
+**Returns** — `{{ fn.returnType.text }}`{% if fn.doc.returns %} — {{ fn.doc.returns }}{% endif %}
+{% endif %}
+
+{{ fn.doc.description }}
+
+{% for ex in fn.doc.examples %}
+```{{ ex.lang }}
+{{ ex.code }}
+```
+{% endfor %}

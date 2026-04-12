@@ -1,0 +1,23 @@
+{%- if sym -%}
+### {{ sym.name }}
+
+{{ sym.doc.summary }}
+
+{{ sym | mdxSignature | safe }}
+
+{%- if sym.doc.description %}
+
+{{ sym.doc.description }}
+{%- endif %}
+
+{%- if sym.doc.examples.length > 0 %}
+
+**Examples**
+
+{%- for ex in sym.doc.examples %}
+```{{ ex.lang }}
+{{ ex.code }}
+```
+{%- endfor %}
+{%- endif %}
+{%- endif %}

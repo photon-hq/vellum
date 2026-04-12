@@ -1,0 +1,9 @@
+# Constants
+
+All exported constants from `src/constants.ts`.
+
+| Name | Value | Description |
+| ---- | ----- | ----------- |
+{% for c in symbols({ module: "src/constants.ts", kind: "const" }) -%}
+| `{{ c.name }}` | `{{ c.value.text }}` | {{ c.doc.summary }} |
+{% endfor %}

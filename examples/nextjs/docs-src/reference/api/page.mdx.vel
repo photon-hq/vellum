@@ -1,0 +1,43 @@
+export const metadata = { title: "API — Reference" };
+
+# API
+
+All exported functions from `src/lib/api.ts`.
+
+{% for fn in symbols({ module: "src/lib/api.ts", kind: "function" }) %}
+## {{ fn.name }}
+
+{{ fn.doc.summary }}
+
+{{ fn | mdxSignature | safe }}
+
+{%- if fn.parameters and fn.parameters.length > 0 %}
+
+**Parameters**
+
+{% for p in fn.parameters -%}
+- **`{{ p.name }}`**{% if p.optional %} _(optional)_{% endif %} — `{{ p.type.text }}`{% if p.doc %} — {{ p.doc }}{% endif %}
+{% endfor %}
+{%- endif %}
+
+{%- if fn.returnType and fn.returnType.text %}
+
+**Returns** — `{{ fn.returnType.text }}`{% if fn.doc.returns %} — {{ fn.doc.returns }}{% endif %}
+{%- endif %}
+
+{%- if fn.doc.description %}
+
+{{ fn.doc.description }}
+{%- endif %}
+
+{%- if fn.doc.examples.length > 0 %}
+{% for ex in fn.doc.examples %}
+```{{ ex.lang }}
+{{ ex.code }}
+```
+{% endfor %}
+{%- endif %}
+
+---
+{% endfor %}
+

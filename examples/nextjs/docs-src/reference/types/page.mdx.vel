@@ -1,0 +1,37 @@
+export const metadata = { title: "Types — Reference" };
+
+# Types
+
+This page is generated from `src/types.ts` by Sigil. Do not edit by hand.
+
+{% for sym in symbols({ module: "src/types.ts" }) %}
+## {{ sym.name }}
+
+{{ sym.doc.summary }}
+
+{{ sym | mdxSignature | safe }}
+
+{%- if sym.members and sym.members.length > 0 %}
+
+**Fields**
+
+{% for m in sym.members -%}
+- **`{{ m.name }}`**{% if m.optional %} _(optional)_{% endif %} — {{ m.doc.summary }}
+{% endfor %}
+{%- endif %}
+
+{%- if sym.doc.description %}
+
+{{ sym.doc.description }}
+{%- endif %}
+
+{%- if sym.doc.examples.length > 0 %}
+{% for ex in sym.doc.examples %}
+```{{ ex.lang }}
+{{ ex.code }}
+```
+{% endfor %}
+{%- endif %}
+
+---
+{% endfor %}

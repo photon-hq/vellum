@@ -1,0 +1,11 @@
+export const metadata = { title: "Constants — Reference" };
+
+# Constants
+
+All exported constants from `src/lib/constants.ts`.
+
+| Name | Value | Description |
+| ---- | ----- | ----------- |
+{% for c in symbols({ module: "src/lib/constants.ts", kind: "const" }) -%}
+| `{{ c.name }}` | `{{ c.value.text }}` | {{ c.doc.summary }} |
+{% endfor %}

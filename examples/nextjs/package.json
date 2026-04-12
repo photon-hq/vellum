@@ -1,0 +1,31 @@
+{
+  "name": "vellum-example-nextjs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "docs:build": "vellum build",
+    "dev": "vellum build && next dev",
+    "build": "vellum build && next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@mdx-js/loader": "^3.1.0",
+    "@mdx-js/react": "^3.1.0",
+    "@next/mdx": "^15.0.3",
+    "@vellum-docs/cli": "workspace:*",
+    "@vellum-docs/core": "workspace:*",
+    "@vellum-docs/engine-nunjucks": "workspace:*",
+    "@vellum-docs/extractor-typescript": "workspace:*",
+    "@vellum-docs/profile-markdown": "workspace:*",
+    "next": "^15.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/mdx": "^2.0.13",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.6.3"
+  }
+}

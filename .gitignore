@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+.turbo/
+
+# Next.js build artifacts
+.next/
+out/
+
+# Vellum output — generated from .vel sources, never checked in
+examples/**/docs/**/*.mdx
+examples/**/docs/**/*.md
+examples/**/docs/**/*.html
+!examples/**/docs/**/*.mdx.vel
+!examples/**/docs/**/*.md.vel
+!examples/**/docs/**/*.html.vel

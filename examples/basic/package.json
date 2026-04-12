@@ -1,0 +1,17 @@
+{
+  "name": "vellum-example-basic",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vellum build"
+  },
+  "dependencies": {
+    "@vellum-docs/cli": "workspace:*",
+    "@vellum-docs/core": "workspace:*",
+    "@vellum-docs/engine-nunjucks": "workspace:*",
+    "@vellum-docs/extractor-typescript": "workspace:*",
+    "@vellum-docs/profile-markdown": "workspace:*",
+    "@vellum-docs/profile-mintlify": "workspace:*"
+  }
+}

@@ -1,0 +1,6 @@
+{%- set consts = symbols({ module: module, kind: "const" }) -%}
+| Name | Value | Description |
+| ---- | ----- | ----------- |
+{%- for c in consts %}
+| `{{ c.name }}` | `{{ c.value.text if c.value else "" }}` | {{ c.doc.summary }} |
+{%- endfor %}

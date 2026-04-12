@@ -1,0 +1,338 @@
+# Vellum
+
+A build-time documentation preprocessor. Write templates that reference your
+source code — types, constants, functions, TSDoc comments — and Vellum
+compiles them into plain Markdown, MDX, or HTML that any docs host can
+consume without runtime support.
+
+```
+  .mdx.vel              extract            expand                .mdx
+   source   ─────►  symbol index  ─────►  templates  ─────►   output
+   files              (cached)          (Nunjucks)           (plain)
+```
+
+## Why
+
+**Curated docs that don't drift.**
+
+There are two common ways to write API docs, and both make you choose:
+
+- **Manual docs**: hand-written Markdown. You pick what to show, write
+narrative around it, add the right examples, leave out internal noise.
+The result is docs developers actually want to read. But they drift. A
+type gets a new field, a function signature changes, a deprecation lands
+— and unless someone updates the docs in the same PR, the reference goes
+stale. In practice, it always does.
+
+- **Auto-generated docs**: TypeDoc, Rustdoc, JSDoc. Always accurate because
+they read the source directly. But they generate *everything*: a wall of
+alphabetically sorted API surface with no sense of what matters. The output
+is comprehensive but not curated, and customizing the layout means fighting
+the tool's theme system. The result is technically correct but rarely what
+a developer wants to land on.
+
+Vellum gives you both. You write curated docs: choosing what to surface,
+in what order, with whatever narrative and structure fits your readers. But
+the type signatures, parameter lists, constants, and descriptions are
+pulled live from the source at build time. The code changes, the docs
+update. No copy-paste, no drift.
+
+The output is plain MDX / Markdown / HTML. Mintlify, Next.js, Docusaurus,
+Nextra, or any other host renders it directly - no plugins, no runtime
+JavaScript, no custom components.
+
+## Quick start
+
+### 1. Install
+
+```sh
+pnpm add @vellum-docs/cli @vellum-docs/core @vellum-docs/extractor-typescript \
+        @vellum-docs/engine-nunjucks @vellum-docs/profile-markdown
+```
+
+### 2. Create a config file
+
+```ts
+// vellum.config.ts
+import type { VellumConfig } from "@vellum-docs/core";
+import { NunjucksEngine }     from "@vellum-docs/engine-nunjucks";
+import { TypeScriptExtractor } from "@vellum-docs/extractor-typescript";
+import { MarkdownProfile }     from "@vellum-docs/profile-markdown";
+
+export default {
+  root: import.meta.dirname,
+  sources: { ts: { include: ["src"] } },
+  templates: "docs-src",
+  outDir: "docs",
+  extractors: [new TypeScriptExtractor()],
+  engine: new NunjucksEngine(),
+  profile: new MarkdownProfile(),
+} satisfies VellumConfig;
+```
+
+### 3. Write a template
+
+Create `docs-src/types.mdx.vel`:
+
+```njk
+# Types
+
+{% set t = symbol("ts:src/types.ts#User") %}
+## {{ t.name }}
+
+{{ t.doc.summary }}
+
+{{ t | mdxSignature | safe }}
+
+{% for m in t.members -%}
+- **`{{ m.name }}`**{% if m.optional %} _(optional)_{% endif %} — {{ m.doc.summary }}
+{% endfor %}
+```
+
+### 4. Build
+
+```sh
+npx vellum build
+```
+
+Output lands in `docs/types.mdx` - a plain MDX file ready for your host.
+
+## File conventions
+
+Template source files use a `.vel` extension appended to the target format:
+
+```
+docs-src/types.mdx.vel        →  docs/types.mdx
+docs-src/guide.md.vel          →  docs/guide.md
+docs-src/reference.html.vel    →  docs/reference.html
+```
+
+Generated output should be gitignored and built in CI before the host tool
+runs. See `examples/` for working setups.
+
+## Template language
+
+Vellum uses [Nunjucks](https://mozilla.github.io/nunjucks/) (Jinja-family
+syntax). Templates have access to:
+
+### Globals
+
+```njk
+{# Look up one symbol by its id #}
+{% set t = symbol("ts:src/types.ts#User") %}
+
+{# Query many symbols #}
+{% for c in symbols({ module: "src/constants.ts", kind: "const" }) %}
+| `{{ c.name }}` | `{{ c.value.text }}` | {{ c.doc.summary }} |
+{% endfor %}
+
+{# Get a module's exports #}
+{% set m = module("src/types.ts") %}
+```
+
+**`symbol(id)`** — look up a single symbol by its `SymbolId`
+(`"ts:<module>#<name>"`). Returns `null` if not found.
+
+**`symbols(query)`** — query multiple symbols. Query fields:
+
+| Field          | Type                   | Default | Description                        |
+| -------------- | ---------------------- | ------- | ---------------------------------- |
+| `module`       | `string`               | —       | Module path (glob supported)       |
+| `kind`         | `string \| string[]`   | —       | `"function"`, `"interface"`, etc.  |
+| `tag`          | `string`               | —       | Match `symbol.tags`                |
+| `customTag`    | `string`               | —       | Match `doc.customTags` keys        |
+| `prefix`       | `string`               | —       | Name starts with                   |
+| `exportedOnly` | `boolean`              | `true`  | Only exported symbols              |
+
+**`module(path)`** — return a module's exported symbols.
+
+### Filters
+
+```njk
+{{ sym | mdxSignature | safe }}    {# signature as a code fence #}
+{{ sym | typeRef | safe }}         {# inline name, tooltip if profile supports it #}
+{{ sym | typeCard | safe }}        {# full card: signature + docs + examples #}
+{{ sym | mdxLink | safe }}         {# name as a link #}
+{{ sym | summary }}                {# just the doc summary text #}
+{{ sym | example(0) }}             {# nth @example code block #}
+{{ ts  | typeString | safe }}      {# render a TypeString inline #}
+```
+
+### Built-in partials
+
+For common layouts, include a built-in partial instead of writing the
+markup yourself:
+
+```njk
+{% include "@vellum-docs/partials/type-card.njk" %}
+{% include "@vellum-docs/partials/constant-table.njk" %}
+{% include "@vellum-docs/partials/function-signature.njk" %}
+```
+
+Partials are the customization point: copy one into your project, edit it,
+and `{% include %}` your copy instead.
+
+### Symbol fields
+
+Every symbol exposed to templates has this shape (kind-specific fields are
+present only when applicable):
+
+```
+sym.id                     SymbolId ("ts:src/types.ts#User")
+sym.name                   "User"
+sym.kind                   "interface" | "type" | "function" | "const" | ...
+sym.module                 "src/types.ts"
+sym.exported               true
+sym.signature              full declaration as-written
+sym.doc.summary            first paragraph of TSDoc
+sym.doc.description        body after summary
+sym.doc.params             { paramName: "description" }
+sym.doc.returns            "@returns text"
+sym.doc.examples[]         [{ lang, code, title, description }]
+sym.doc.deprecated         { reason } | null
+sym.doc.customTags         { "@tagName": ["value"] }
+sym.members[]              interface/class fields (each has .name, .type, .doc, ...)
+sym.parameters[]           function params (each has .name, .type, .optional, .doc)
+sym.returnType             { text, refs[] }
+sym.variants[]             enum members
+sym.value                  const value ({ text, kind })
+sym.tags[]                 ["deprecated", "beta", ...]
+```
+
+Full TypeScript definitions are in `@vellum-docs/core` — see
+`packages/core/src/types.ts`.
+
+## SymbolId format
+
+```
+<language>:<module-path>#<qualified-name>
+```
+
+Examples:
+
+```
+ts:src/types.ts#User
+ts:src/types.ts#User.email
+ts:src/lib/api.ts#fetchUser
+```
+
+Module paths are relative to the project root set in `vellum.config.ts`.
+
+## Renderer profiles
+
+A profile controls how filters like `mdxSignature` and `typeRef` produce
+output. Swap the profile to change target host without changing templates.
+
+| Package                     | Target    | Description                                        |
+| --------------------------- | --------- | -------------------------------------------------- |
+| `@vellum-docs/profile-markdown`  | MD / MDX  | Plain code fences and inline code. No components.  |
+| `@vellum-docs/profile-mintlify`  | MDX       | Mintlify `<Tooltip>`, `<Card>`, `<CodeGroup>`, etc.|
+
+To write a custom profile, implement the `RendererProfile` interface from
+`@vellum-docs/core`:
+
+```ts
+import type { RendererProfile, RenderContext, Symbol, TypeString } from "@vellum-docs/core";
+
+export class MyProfile implements RendererProfile {
+  readonly name = "my-host";
+  readonly targetExtensions = [".mdx"] as const;
+
+  typeRef(sym: Symbol, ctx: RenderContext): string { /* ... */ }
+  signature(sym: Symbol, ctx: RenderContext): string { /* ... */ }
+  typeString(ts: TypeString, ctx: RenderContext): string { /* ... */ }
+  typeCard(sym: Symbol, ctx: RenderContext): string { /* ... */ }
+  link(sym: Symbol, ctx: RenderContext): string { /* ... */ }
+}
+```
+
+## Writing a custom extractor
+
+To add a new language, implement the `Extractor` interface from
+`@vellum-docs/core`:
+
+```ts
+import type { Extractor, ExtractInput, Symbol } from "@vellum-docs/core";
+
+export class PythonExtractor implements Extractor {
+  readonly language = "py";
+  readonly extensions = [".py"] as const;
+
+  async extract(input: ExtractInput): Promise<Symbol[]> {
+    // Parse files in input.files, return Symbol records.
+    // Every field must conform to the schema in @vellum-docs/core/types.
+  }
+}
+```
+
+Register it in your config:
+
+```ts
+extractors: [new TypeScriptExtractor(), new PythonExtractor()],
+sources: {
+  ts: { include: ["src"] },
+  py: { include: ["lib"] },
+},
+```
+
+## CLI
+
+```
+vellum build [--config <path>] [--cwd <path>]
+```
+
+- `--config` — path to config file (default: auto-discovers
+  `vellum.config.{ts,mts,js,mjs}` in cwd)
+- `--cwd` — working directory (default: `process.cwd()`)
+
+## Packages
+
+| Package                           | Description                              |
+| --------------------------------- | ---------------------------------------- |
+| `@vellum-docs/core`                    | Types, interfaces, symbol index, cache, orchestrator |
+| `@vellum-docs/extractor-typescript`    | TypeScript extractor (TS compiler API + `@microsoft/tsdoc`) |
+| `@vellum-docs/engine-nunjucks`         | Nunjucks template engine with globals, filters, partials |
+| `@vellum-docs/profile-markdown`        | Plain Markdown / MDX renderer profile    |
+| `@vellum-docs/profile-mintlify`        | Mintlify renderer profile                |
+| `@vellum-docs/cli`                     | CLI (`vellum build`)                     |
+
+## Examples
+
+### `examples/basic`
+
+Minimal setup. Three `.vel` templates render types, constants, and an API
+function into plain `.mdx` and `.md` files.
+
+```sh
+cd examples/basic
+pnpm build            # runs: vellum build
+cat docs/types.mdx    # generated output
+```
+
+### `examples/nextjs`
+
+Full Next.js App Router integration. Vellum outputs `page.mdx` files
+directly into `app/docs/reference/*/`, so Next.js serves them via
+file-system routing with zero runtime lookup.
+
+```sh
+cd examples/nextjs
+pnpm docs:build       # runs: vellum build
+pnpm dev              # runs: vellum build && next dev
+```
+
+Generated pages:
+- `/docs/reference/types` — all interfaces and type aliases
+- `/docs/reference/constants` — constant table with name, value, description
+- `/docs/reference/api` — function signatures with params, returns, examples
+
+## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for design decisions, the full symbol
+model schema, extractor pipeline, and rationale for key choices
+(Nunjucks over Handlebars, raw TS compiler API over ts-morph, string-based
+types over structured type trees, etc.).
+
+## License
+
+MIT
