@@ -14,10 +14,14 @@
     "example": "turbo run build --filter=vellum-example-basic",
     "example:nextjs": "turbo run docs:build --filter=vellum-example-nextjs",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^8.1.1",
+    "@changesets/cli": "^2.30.0",
     "@types/node": "^22.7.4",
     "eslint": "^10.2.0",
     "tsdown": "^0.21.7",
