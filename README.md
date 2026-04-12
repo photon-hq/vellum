@@ -61,7 +61,7 @@ import { MarkdownProfile } from '@vellum-docs/profile-markdown'
 
 export default {
   root: import.meta.dirname,
-  sources: { ts: { include: ['src'] } },
+  sources: { ts: { include: ['src'], packages: ['zod'] } },
   templates: 'docs-src',
   outDir: 'docs',
   extractors: [new TypeScriptExtractor()],
@@ -139,6 +139,7 @@ syntax). Templates have access to:
 | -------------- | ---------------------- | ------- | ---------------------------------- |
 | `module`       | `string`               | —       | Module path (glob supported)       |
 | `kind`         | `string \| string[]`   | —       | `"function"`, `"interface"`, etc.  |
+| `language`     | `string`               | —       | `"ts"`, `"py"`, etc.               |
 | `tag`          | `string`               | —       | Match `symbol.tags`                |
 | `customTag`    | `string`               | —       | Match `doc.customTags` keys        |
 | `prefix`       | `string`               | —       | Name starts with                   |
@@ -284,6 +285,64 @@ vellum build [--config <path>] [--cwd <path>]
 - `--config` — path to config file (default: auto-discovers
   `vellum.config.{ts,mts,js,mjs}` in cwd)
 - `--cwd` — working directory (default: `process.cwd()`)
+
+## Package extraction
+
+Vellum can extract types from npm packages, not just your own source files.
+Add package specifiers to the `packages` array in your source config:
+
+```ts
+sources: {
+  ts: {
+    include: ['src'],
+    packages: ['next/font', '@tanstack/react-query', 'zod'],
+  },
+}
+```
+
+Vellum resolves each package to its `.d.ts` entry point (via the `types` /
+`typings` field in `package.json`, or falling back to `@types/*`) and
+extracts all exported symbols. Symbols use the package specifier as their
+module path:
+
+```njk
+{% set Schema = symbol("ts:zod#ZodType") %}
+{% for sym in symbols({ module: "zod", kind: "class" }) %}
+```
+
+Libraries that ship TSDoc in their `.d.ts` files get full doc extraction.
+Libraries without TSDoc still get signatures, member lists, and type info —
+just with empty `doc.summary` fields.
+
+## Caching
+
+Vellum caches extracted symbols on disk at
+`node_modules/.cache/vellum/`. Each source file gets a cache entry keyed
+by `SHA1(language + file path + file content hash)`. On subsequent builds,
+unchanged files skip extraction entirely.
+
+The cache is automatic — no configuration needed. To clear it:
+
+```sh
+rm -rf node_modules/.cache/vellum
+```
+
+You can also provide a custom `Cache` implementation in the config:
+
+```ts
+import { InMemoryCache } from '@vellum-docs/core'
+
+export default {
+  // ...
+  cache: new InMemoryCache(), // disable disk cache, use in-memory only
+} satisfies VellumConfig
+```
+
+**Known limitation:** the cache keys by file content only. If file A
+imports from file B and B changes, A's cached symbols may have stale
+`typeRefs`. A full rebuild (`rm -rf node_modules/.cache/vellum`) fixes
+this. Transitive invalidation via a dependency graph is planned for a
+future release.
 
 ## Packages
 

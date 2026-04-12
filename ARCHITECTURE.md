@@ -400,19 +400,54 @@ Every language extractor implements the same interface:
 interface Extractor {
   language: string // "ts", "py", "rust", ...
   extensions: string[] // [".ts", ".tsx", ".mts", ...]
-  extract: (input: ExtractInput) => Promise<symbol[]>
+  extract: (input: ExtractInput) => Promise<Symbol[]>
 }
 
 interface ExtractInput {
-  files: string[] // absolute paths
+  files: string[] // absolute paths to project source files
   root: string // project root for module-path resolution
   config: unknown // language-specific config slice
+  packageFiles?: PackageFile[] // .d.ts from npm packages (see below)
+}
+
+interface PackageFile {
+  file: string // absolute path to the resolved .d.ts
+  packageName: string // original specifier, e.g. "zod" or "next/font"
 }
 ```
 
 This is the only contract the rest of the system sees. Backends can be
 swapped without touching the symbol index or template layer, which is
 what makes the "watch list" items below cheap to adopt later.
+
+### Package extraction
+
+Source config supports a `packages` array alongside `include`:
+
+```ts
+sources: {
+  ts: {
+    include: ['src'],
+    packages: ['zod', '@tanstack/react-query'],
+  },
+}
+```
+
+The orchestrator resolves each package specifier to its `.d.ts` entry
+point through three strategies (in order):
+
+1. `require.resolve("pkg/package.json")` → read `types`/`typings` field
+2. `require.resolve("pkg")` → check for co-located `.d.ts`
+3. `@types/pkg` fallback
+
+The resolved files are passed to the extractor via `packageFiles`. The TS
+extractor uses `checker.getExportsOfModule()` to follow re-exports through
+barrel files, ensuring all public API symbols are captured even when the
+package's `index.d.ts` is just `export { X } from './internal'` chains.
+
+Symbols from packages use the package specifier as their module path in
+`SymbolId`s — e.g. `ts:zod#ZodType` — rather than the resolved file path
+which is package-manager-specific and unstable.
 
 ### TypeScript backend (v1): raw TypeScript compiler API
 
@@ -565,9 +600,10 @@ doesn't require rewriting anything.
 
 - **Watch mode / HMR.** `vellum watch` re-extracts only changed files
   and re-renders only the `.mdx.vel` templates that read symbols whose
-  `SymbolId` was touched. The caching layer's invalidation granularity
-  is the main unsolved piece. Expected to land shortly after v1 once
-  the cache format is settled.
+  `SymbolId` was touched. The disk cache (see below) handles per-file
+  invalidation; what's missing is the template-to-symbol dependency
+  tracking needed to know which `.vel` files to re-render when a symbol
+  changes.
 - **Language server (LSP).** A Vellum LSP would serve authors editing
   `.mdx.vel` files: autocomplete for `SymbolId`s in `symbol()` and
   `symbols()` calls, hover previews showing the resolved signature and
@@ -580,10 +616,64 @@ doesn't require rewriting anything.
 
 ---
 
+## Caching
+
+Symbol extraction is cached on disk at `node_modules/.cache/vellum/`.
+
+Each source file gets a cache entry keyed by
+`SHA1(language + file path + file content hash)`. The entry is a JSON
+file containing the `CacheKey` and the extracted `Symbol[]`. On subsequent
+builds, the orchestrator computes the content hash, checks the disk cache,
+and skips extraction for any file whose hash matches.
+
+Implementation: `DiskCache` in `packages/core/src/cache.ts`. A hot
+in-memory layer (`Map<string, CacheEntry>`) sits in front of disk reads
+to avoid repeated I/O within a single build.
+
+The `Cache` interface is pluggable — pass a custom implementation via
+`config.cache` to replace the default `DiskCache`. `InMemoryCache` is
+shipped as an alternative for tests or CI environments where disk
+persistence is unnecessary.
+
+### Known limitation: no transitive invalidation
+
+The cache keys by file content only. If file A imports a type from file B
+and file B changes, A's cached symbols may contain stale `typeRefs`
+pointing to the old version of B's declarations. A full cache clear
+(`rm -rf node_modules/.cache/vellum`) fixes this.
+
+Transitive invalidation via a dependency graph is a future enhancement.
+The extractor already has access to the TypeScript checker's module
+graph, so the information is available — it just needs to be surfaced
+to the cache layer as an additional invalidation signal.
+
+### Package file caching
+
+Package `.d.ts` files are **not** cached per-file in v1. They go through
+`extractFromModuleExports` on every build because barrel re-exports make
+per-file keying unreliable (the entry file's content doesn't change when
+an internal file it re-exports from does). This is acceptable for most
+packages since `.d.ts` extraction is fast, but could become a bottleneck
+for very large packages.
+
+---
+
+## Resolved decisions
+
+These were previously open and are now settled:
+
+- **Caching layer.** Disk-backed, `node_modules/.cache/vellum/`,
+  file-hash-keyed JSON. See above.
+- **Config file format.** `vellum.config.ts` (also `.mts`, `.js`, `.mjs`),
+  loaded via `jiti`. Default export of a `VellumConfig` object.
+- **CLI surface.** `vellum build` with `--config` and `--cwd` flags.
+  `vellum check` and `vellum watch` are future additions.
+
+---
+
 ## Open decisions
 
-- **Caching layer.** Likely file-hash-keyed JSON on disk, invalidated per
-  module. Exact storage format TBD.
-- **Config file format.** Likely `vellum.config.ts` with typed exports.
-- **CLI surface.** At minimum `vellum build`; probably `vellum check`
-  (verify all referenced symbols exist) and later `vellum watch`.
+- **Transitive cache invalidation.** Per-file hash misses cross-file
+  type reference staleness. Needs a dependency graph from the checker.
+- **Template-to-symbol dependency tracking.** Needed for watch mode
+  to know which `.vel` files to re-render when a symbol changes.
