@@ -9,7 +9,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, extname, join, relative, resolve } from 'node:path'
-import { InMemoryCache } from './cache'
+import { DiskCache } from './cache'
 import { InMemorySymbolIndex } from './symbol-index'
 
 const RE_JS_EXT = /\.(js|mjs|cjs)$/
@@ -68,7 +68,7 @@ export class Vellum {
   constructor(config: VellumConfig) {
     this.config = config
     this.index = config.index ?? new InMemorySymbolIndex()
-    this.cache = config.cache ?? new InMemoryCache()
+    this.cache = config.cache ?? new DiskCache(resolve(config.root))
   }
 
   async extractAll(): Promise<number> {
