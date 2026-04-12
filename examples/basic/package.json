@@ -12,6 +12,7 @@
     "@vellum-docs/engine-nunjucks": "workspace:*",
     "@vellum-docs/extractor-typescript": "workspace:*",
     "@vellum-docs/profile-markdown": "workspace:*",
-    "@vellum-docs/profile-mintlify": "workspace:*"
+    "@vellum-docs/profile-mintlify": "workspace:*",
+    "@microsoft/tsdoc": "^0.15.1"
   }
 }

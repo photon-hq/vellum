@@ -29,7 +29,12 @@ interface WalkContext {
   root: string;
   /** Map of qualified name → id, populated in a first pass for cross-ref resolution. */
   knownNames: Map<string, string>;
+  /** When true, all symbols are treated as exported (package extraction mode). */
+  forceExported?: boolean;
 }
+
+const isSymExported = (node: ts.Node, ctx: WalkContext): boolean =>
+  ctx.forceExported || isExported(node);
 
 const docOrEmpty = (node: ts.Node, sourceFile: ts.SourceFile): DocComment => {
   const raw = getLeadingJSDoc(node, sourceFile);
@@ -115,7 +120,7 @@ const extractFunction = (
     module: ctx.modulePath,
     source: locationOf(node, ctx.sourceFile, ctx.root),
     visibility: "public",
-    exported: isExported(node),
+    exported: isSymExported(node, ctx),
     signature: formatSignature(node, ctx.sourceFile),
     typeRefs: [],
     doc,
@@ -191,7 +196,7 @@ const extractInterface = (
     module: ctx.modulePath,
     source: locationOf(node, ctx.sourceFile, ctx.root),
     visibility: "public",
-    exported: isExported(node),
+    exported: isSymExported(node, ctx),
     signature: formatSignature(node, ctx.sourceFile),
     typeRefs: [],
     doc,
@@ -219,7 +224,7 @@ const extractTypeAlias = (
     module: ctx.modulePath,
     source: locationOf(node, ctx.sourceFile, ctx.root),
     visibility: "public",
-    exported: isExported(node),
+    exported: isSymExported(node, ctx),
     signature: formatSignature(node, ctx.sourceFile),
     typeRefs: [],
     doc,
@@ -271,7 +276,7 @@ const extractVariable = (
     module: ctx.modulePath,
     source: locationOf(decl, ctx.sourceFile, ctx.root),
     visibility: "public",
-    exported: isExported(statement),
+    exported: isSymExported(statement, ctx),
     signature: `${isConst ? "const" : "let"} ${name}${valueType.text ? ": " + valueType.text : ""}${
       value ? " = " + value.text : ""
     }`,
@@ -300,7 +305,7 @@ const extractEnum = (node: ts.EnumDeclaration, ctx: WalkContext): VSymbol => {
     module: ctx.modulePath,
     source: locationOf(node, ctx.sourceFile, ctx.root),
     visibility: "public",
-    exported: isExported(node),
+    exported: isSymExported(node, ctx),
     signature: formatSignature(node, ctx.sourceFile),
     typeRefs: [],
     doc,
@@ -386,7 +391,7 @@ const extractClass = (
     module: ctx.modulePath,
     source: locationOf(node, ctx.sourceFile, ctx.root),
     visibility: "public",
-    exported: isExported(node),
+    exported: isSymExported(node, ctx),
     signature: formatSignature(node, ctx.sourceFile),
     typeRefs: [],
     doc,
@@ -407,8 +412,9 @@ const extractClass = (
 export const collectNames = (
   sourceFile: ts.SourceFile,
   root: string,
+  moduleOverride?: string,
 ): Map<string, string> => {
-  const modulePath = moduleOf(root, sourceFile.fileName);
+  const modulePath = moduleOverride ?? moduleOf(root, sourceFile.fileName);
   const names = new Map<string, string>();
   for (const stmt of sourceFile.statements) {
     if (ts.isInterfaceDeclaration(stmt) || ts.isTypeAliasDeclaration(stmt) || ts.isClassDeclaration(stmt) || ts.isEnumDeclaration(stmt)) {
@@ -431,8 +437,9 @@ export const extractFromFile = (
   checker: ts.TypeChecker,
   root: string,
   knownNames: Map<string, string>,
+  moduleOverride?: string,
 ): VSymbol[] => {
-  const modulePath = moduleOf(root, sourceFile.fileName);
+  const modulePath = moduleOverride ?? moduleOf(root, sourceFile.fileName);
   const ctx: WalkContext = {
     checker,
     sourceFile,
@@ -440,6 +447,12 @@ export const extractFromFile = (
     root,
     knownNames,
   };
+
+  // For package files (moduleOverride set), use the checker to resolve all
+  // exports — this follows re-exports through barrel files.
+  if (moduleOverride) {
+    return extractFromModuleExports(sourceFile, checker, ctx);
+  }
 
   const results: VSymbol[] = [];
   for (const stmt of sourceFile.statements) {
@@ -459,6 +472,64 @@ export const extractFromFile = (
       results.push(extractEnum(stmt, ctx));
     } else if (ts.isClassDeclaration(stmt)) {
       const s = extractClass(stmt, ctx);
+      if (s) results.push(s);
+    }
+  }
+  return results;
+};
+
+/**
+ * Extract symbols by resolving a module's exports through the type checker.
+ * This follows re-exports, barrel files, and `export * from` chains —
+ * the right strategy for package .d.ts files.
+ */
+const extractFromModuleExports = (
+  sourceFile: ts.SourceFile,
+  checker: ts.TypeChecker,
+  ctx: WalkContext,
+): VSymbol[] => {
+  const fileSymbol = checker.getSymbolAtLocation(sourceFile);
+  if (!fileSymbol) return [];
+
+  const exports = checker.getExportsOfModule(fileSymbol);
+  const results: VSymbol[] = [];
+
+  for (const sym of exports) {
+    // Resolve aliases (re-exports).
+    const resolved =
+      sym.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(sym) : sym;
+    const decls = resolved.getDeclarations();
+    if (!decls || decls.length === 0) continue;
+    const decl = decls[0]!;
+    const declSourceFile = decl.getSourceFile();
+
+    // Build a context for the declaration's actual source file (may differ
+    // from the barrel file). Force exported=true since the checker told us
+    // this symbol is in the module's public exports.
+    const declCtx: WalkContext = {
+      ...ctx,
+      sourceFile: declSourceFile,
+      forceExported: true,
+    };
+
+    if (ts.isInterfaceDeclaration(decl)) {
+      results.push(extractInterface(decl, declCtx));
+    } else if (ts.isTypeAliasDeclaration(decl)) {
+      results.push(extractTypeAlias(decl, declCtx));
+    } else if (ts.isFunctionDeclaration(decl)) {
+      const s = extractFunction(decl, declCtx);
+      if (s) results.push(s);
+    } else if (ts.isVariableDeclaration(decl)) {
+      // Find the parent VariableStatement for the export/const checks.
+      const stmt = decl.parent?.parent;
+      if (stmt && ts.isVariableStatement(stmt)) {
+        const s = extractVariable(stmt, decl, declCtx);
+        if (s) results.push(s);
+      }
+    } else if (ts.isEnumDeclaration(decl)) {
+      results.push(extractEnum(decl, declCtx));
+    } else if (ts.isClassDeclaration(decl)) {
+      const s = extractClass(decl, declCtx);
       if (s) results.push(s);
     }
   }

@@ -3,6 +3,7 @@ import type { Module, Symbol, SymbolId, SymbolKind } from "./types.js";
 export interface SymbolQuery {
   module?: string;
   kind?: SymbolKind | SymbolKind[];
+  language?: string;
   tag?: string;
   customTag?: string;
   prefix?: string;
@@ -73,6 +74,7 @@ export class InMemorySymbolIndex implements SymbolIndex {
     const results: Symbol[] = [];
     for (const s of this.byId.values()) {
       if (exportedOnly && !s.exported) continue;
+      if (query.language && s.language !== query.language) continue;
       if (kinds && !kinds.has(s.kind)) continue;
       if (moduleRe && !moduleRe.test(s.module)) continue;
       if (query.tag && !s.tags.includes(query.tag)) continue;

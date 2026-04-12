@@ -1,11 +1,13 @@
+import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve } from "node:path";
 
 import type { Cache } from "./cache.js";
 import { InMemoryCache } from "./cache.js";
 import type { TemplateEngine } from "./engine.js";
-import type { Extractor } from "./extractor.js";
+import type { Extractor, PackageFile } from "./extractor.js";
 import type { RendererProfile } from "./profile.js";
 import type { SymbolIndex } from "./symbol-index.js";
 import { InMemorySymbolIndex } from "./symbol-index.js";
@@ -15,7 +17,18 @@ export interface VellumConfig {
   root: string;
 
   /** Source roots to extract symbols from, per language. Paths relative to root. */
-  sources: Record<string, { include: string[] }>;
+  sources: Record<string, {
+    include: string[];
+    /**
+     * npm packages to extract types from. Each entry is a package specifier
+     * (e.g. "next/font", "@tanstack/react-query"). Vellum resolves the
+     * package's `.d.ts` entry point and extracts exported symbols from it.
+     *
+     * Symbols from packages use the package specifier as their module path
+     * in SymbolIds, e.g. `ts:next/font#NextFont`.
+     */
+    packages?: string[];
+  }>;
 
   /** Template source directory (contains .vel files). Relative to root. */
   templates: string;
@@ -65,6 +78,10 @@ export class Vellum {
       if (!langConfig) continue;
 
       const files = await this.resolveFiles(root, langConfig.include, extractor.extensions);
+
+      // Resolve package specifiers to their .d.ts entry points.
+      const packageFiles = this.resolvePackages(root, langConfig.packages ?? [], extractor.extensions);
+
       const fresh: string[] = [];
       const cachedSymbols: import("./types.js").Symbol[] = [];
 
@@ -83,11 +100,13 @@ export class Vellum {
       }
 
       let extracted: import("./types.js").Symbol[] = [];
-      if (fresh.length > 0) {
+      const hasWork = fresh.length > 0 || packageFiles.length > 0;
+      if (hasWork) {
         extracted = await extractor.extract({
           files: fresh,
           root,
           config: this.config.extractorConfig?.[extractor.language],
+          packageFiles: packageFiles.length > 0 ? packageFiles : undefined,
         });
 
         // Re-bin extracted symbols back into per-file cache entries.
@@ -156,6 +175,74 @@ export class Vellum {
       templatesRendered: filesWritten.length,
       filesWritten,
     };
+  }
+
+  private resolvePackages(
+    root: string,
+    packages: string[],
+    _extensions: readonly string[],
+  ): PackageFile[] {
+    if (packages.length === 0) return [];
+    const require = createRequire(resolve(root, "package.json"));
+    const results: PackageFile[] = [];
+
+    for (const pkg of packages) {
+      try {
+        // Try resolving as a types entry: package/index.d.ts or @types/package
+        const resolved = this.resolvePackageTypes(require, pkg);
+        if (resolved) {
+          results.push({ file: resolved, packageName: pkg });
+        }
+      } catch {
+        // Silently skip unresolvable packages — the user might not have
+        // installed them yet. A future `vellum check` command would catch this.
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Try to find the .d.ts entry point for a package. Resolution order:
+   * 1. require.resolve("pkg/package.json") → read `types`/`typings` field
+   * 2. require.resolve("pkg") with .d.ts extensions
+   * 3. require.resolve("@types/pkg") as fallback
+   */
+  private resolvePackageTypes(req: NodeRequire, pkg: string): string | null {
+    // Strategy 1: read the package's own package.json for types/typings field.
+    try {
+      const pkgJsonPath = req.resolve(`${pkg}/package.json`);
+      const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf8"));
+      const typesField: string | undefined =
+        pkgJson.types ?? pkgJson.typings ?? pkgJson.exports?.["."]?.types;
+      if (typesField) {
+        return resolve(dirname(pkgJsonPath), typesField);
+      }
+    } catch {
+      // no package.json — try other strategies
+    }
+
+    // Strategy 2: try resolving the package directly — works when main is a .d.ts.
+    try {
+      const resolved = req.resolve(pkg);
+      if (resolved.endsWith(".d.ts") || resolved.endsWith(".d.mts") || resolved.endsWith(".d.cts")) {
+        return resolved;
+      }
+      // The main might be .js — look for a co-located .d.ts
+      const dtsPath = resolved.replace(/\.(js|mjs|cjs)$/, ".d.ts");
+      if (existsSync(dtsPath)) return dtsPath;
+    } catch {
+      // not resolvable
+    }
+
+    // Strategy 3: @types/pkg fallback.
+    try {
+      const atTypes = `@types/${pkg.startsWith("@") ? pkg.slice(1).replace("/", "__") : pkg}`;
+      return req.resolve(atTypes);
+    } catch {
+      // no @types either
+    }
+
+    return null;
   }
 
   private async resolveFiles(

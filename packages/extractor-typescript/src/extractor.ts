@@ -33,7 +33,12 @@ export class TypeScriptExtractor implements Extractor {
   }
 
   async extract(input: ExtractInput): Promise<VSymbol[]> {
-    if (input.files.length === 0) return [];
+    const packageFiles = input.packageFiles ?? [];
+    const allRootNames = [
+      ...input.files,
+      ...packageFiles.map((pf) => pf.file),
+    ];
+    if (allRootNames.length === 0) return [];
 
     const compilerOptions: ts.CompilerOptions = {
       ...defaultCompilerOptions,
@@ -41,26 +46,43 @@ export class TypeScriptExtractor implements Extractor {
     };
 
     const program = ts.createProgram({
-      rootNames: input.files,
+      rootNames: allRootNames,
       options: compilerOptions,
     });
     const checker = program.getTypeChecker();
 
+    // Build a map of resolved file path → package name for package files.
+    const packageModuleMap = new Map<string, string>();
+    for (const pf of packageFiles) {
+      packageModuleMap.set(pf.file, pf.packageName);
+    }
+
     // First pass: collect names across all files for cross-ref resolution.
     const allNames = new Map<string, string>();
-    for (const file of input.files) {
-      const sf = program.getSourceFile(file);
-      if (!sf || sf.isDeclarationFile) continue;
-      const names = collectNames(sf, input.root);
+    for (const rootName of allRootNames) {
+      const sf = program.getSourceFile(rootName);
+      if (!sf) continue;
+      const moduleOverride = packageModuleMap.get(rootName);
+      const names = collectNames(sf, input.root, moduleOverride);
       for (const [k, v] of names) allNames.set(k, v);
     }
 
     // Second pass: extract symbols.
     const results: VSymbol[] = [];
+
+    // Project files — skip .d.ts (those are ambient, not user-authored).
     for (const file of input.files) {
       const sf = program.getSourceFile(file);
       if (!sf || sf.isDeclarationFile) continue;
       const symbols = extractFromFile(sf, checker, input.root, allNames);
+      results.push(...symbols);
+    }
+
+    // Package .d.ts files — these ARE declaration files, extract them.
+    for (const pf of packageFiles) {
+      const sf = program.getSourceFile(pf.file);
+      if (!sf) continue;
+      const symbols = extractFromFile(sf, checker, input.root, allNames, pf.packageName);
       results.push(...symbols);
     }
 

@@ -20,6 +20,9 @@ importers:
 
   examples/basic:
     dependencies:
+      '@microsoft/tsdoc':
+        specifier: ^0.15.1
+        version: 0.15.1
       '@vellum-docs/cli':
         specifier: workspace:*
         version: link:../../packages/cli

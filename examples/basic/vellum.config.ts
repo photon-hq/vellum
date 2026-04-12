@@ -6,7 +6,7 @@ import { MarkdownProfile } from "@vellum-docs/profile-markdown";
 const config: VellumConfig = {
   root: new URL(".", import.meta.url).pathname,
   sources: {
-    ts: { include: ["src"] },
+    ts: { include: ["src"], packages: ["@microsoft/tsdoc"] },
   },
   templates: "docs-src",
   outDir: "docs",
