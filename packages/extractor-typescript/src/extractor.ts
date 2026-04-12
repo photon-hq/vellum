@@ -2,7 +2,7 @@ import type { ExtractInput, Extractor, Symbol as VSymbol } from '@vellum-docs/co
 
 import ts from 'typescript'
 
-import { collectNames, extractFromFile } from './walk.js'
+import { collectNames, extractFromFile } from './walk'
 
 export interface TypeScriptExtractorOptions {
   /** Compiler options applied to the in-memory Program. */

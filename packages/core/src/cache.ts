@@ -1,4 +1,4 @@
-import type { Symbol } from './types.js'
+import type { Symbol } from './types'
 
 export interface CacheKey {
   language: string

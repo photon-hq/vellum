@@ -1,4 +1,4 @@
-import type { Module, Symbol, SymbolId, SymbolKind } from './types.js'
+import type { Module, Symbol, SymbolId, SymbolKind } from './types'
 
 export interface SymbolQuery {
   module?: string

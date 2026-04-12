@@ -1,5 +1,5 @@
-import type { RendererProfile } from './profile.js'
-import type { SymbolIndex } from './symbol-index.js'
+import type { RendererProfile } from './profile'
+import type { SymbolIndex } from './symbol-index'
 
 export interface TemplateContext {
   index: SymbolIndex

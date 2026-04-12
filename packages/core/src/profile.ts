@@ -1,4 +1,4 @@
-import type { Symbol, TypeString } from './types.js'
+import type { Symbol, TypeString } from './types'
 
 export interface RenderContext {
   profile: RendererProfile

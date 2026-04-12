@@ -1,3 +1,3 @@
-export { runBuild } from './build.js'
-export type { BuildCommandOptions } from './build.js'
-export { findConfig, loadConfig } from './config.js'
+export { runBuild } from './build'
+export type { BuildCommandOptions } from './build'
+export { findConfig, loadConfig } from './config'

@@ -1,4 +1,4 @@
-import type { Symbol } from './types.js'
+import type { Symbol } from './types'
 
 export interface PackageFile {
   /** Absolute path to the resolved .d.ts file. */

@@ -12,7 +12,7 @@ import type {
 import { emptyDocComment } from '@vellum-docs/core'
 import ts from 'typescript'
 
-import { parseTSDoc } from './tsdoc.js'
+import { parseTSDoc } from './tsdoc'
 import {
   formatSignature,
   getLeadingJSDoc,
@@ -20,7 +20,7 @@ import {
   locationOf,
   makeId,
   moduleOf,
-} from './util.js'
+} from './util'
 
 // Module-level regex constants (eslint: e18e/prefer-static-regex)
 const RE_STRING_LITERAL = /^".*"$|^'.*'$|^`.*`$/

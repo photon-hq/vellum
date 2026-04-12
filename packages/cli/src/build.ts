@@ -3,7 +3,7 @@ import process from 'node:process'
 
 import { Vellum } from '@vellum-docs/core'
 
-import { findConfig, loadConfig } from './config.js'
+import { findConfig, loadConfig } from './config'
 
 export interface BuildCommandOptions {
   cwd: string

@@ -1,16 +1,16 @@
-import type { Cache } from './cache.js'
-import type { TemplateEngine } from './engine.js'
-import type { Extractor, PackageFile } from './extractor.js'
-import type { RendererProfile } from './profile.js'
-import type { SymbolIndex } from './symbol-index.js'
+import type { Cache } from './cache'
+import type { TemplateEngine } from './engine'
+import type { Extractor, PackageFile } from './extractor'
+import type { RendererProfile } from './profile'
+import type { SymbolIndex } from './symbol-index'
 
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, extname, join, relative, resolve } from 'node:path'
-import { InMemoryCache } from './cache.js'
-import { InMemorySymbolIndex } from './symbol-index.js'
+import { InMemoryCache } from './cache'
+import { InMemorySymbolIndex } from './symbol-index'
 
 const RE_JS_EXT = /\.(js|mjs|cjs)$/
 

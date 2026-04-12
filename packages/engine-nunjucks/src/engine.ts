@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url'
 
 import nunjucks from 'nunjucks'
 
-import { buildFilters } from './filters.js'
-import { buildGlobals } from './globals.js'
+import { buildFilters } from './filters'
+import { buildGlobals } from './globals'
 
 export interface NunjucksEngineOptions {
   /** Extra directories to resolve `{% include %}` / `{% extends %}` from. */

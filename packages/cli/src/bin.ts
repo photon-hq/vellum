@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import process from 'node:process'
-import { runBuild } from './build.js'
+import { runBuild } from './build'
 
 const args = process.argv.slice(2)
 const command = args[0]

@@ -9,18 +9,18 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
     }
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "files": [
     "dist",
     "partials"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && cp -r src/partials dist/partials",
+    "build": "tsdown src/index.ts --format esm --out-dir dist --dts && cp -r src/partials dist/partials",
     "clean": "rm -rf dist",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
