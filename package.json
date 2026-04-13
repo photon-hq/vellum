@@ -26,6 +26,7 @@
     "@changesets/cli": "^2.30.0",
     "@types/node": "^22.7.4",
     "@vitest/coverage-v8": "^4.1.4",
+    "consola": "^3.4.2",
     "eslint": "^10.2.0",
     "tsdown": "^0.21.7",
     "turbo": "^2.3.0",
