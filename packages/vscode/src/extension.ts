@@ -15,7 +15,12 @@ export function activate(context: ExtensionContext): void {
       debug: { module: serverModule, transport: TransportKind.ipc },
     },
     {
-      documentSelector: [{ language: 'vel' }],
+      documentSelector: [
+        { language: 'vel' },
+        { language: 'vel-md' },
+        { language: 'vel-mdx' },
+        { language: 'vel-html' },
+      ],
       synchronize: {
         fileEvents: [
           workspace.createFileSystemWatcher('**/*.ts'),

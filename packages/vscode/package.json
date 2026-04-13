@@ -15,21 +15,53 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "activationEvents": ["onLanguage:vel"],
   "contributes": {
     "languages": [
       {
         "id": "vel",
-        "aliases": ["Vellum", "vel"],
+        "aliases": ["Vellum"],
         "extensions": [".vel"],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "vel-md",
+        "aliases": ["Vellum (Markdown)"],
+        "filenamePatterns": ["*.md.vel"],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "vel-mdx",
+        "aliases": ["Vellum (MDX)"],
+        "filenamePatterns": ["*.mdx.vel"],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "vel-html",
+        "aliases": ["Vellum (HTML)"],
+        "filenamePatterns": ["*.html.vel"],
         "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
       {
         "language": "vel",
+        "scopeName": "text.html.markdown.vel",
+        "path": "./syntaxes/vel-md.tmLanguage.json"
+      },
+      {
+        "language": "vel-md",
+        "scopeName": "text.html.markdown.vel",
+        "path": "./syntaxes/vel-md.tmLanguage.json"
+      },
+      {
+        "language": "vel-mdx",
+        "scopeName": "text.html.markdown.vel.mdx",
+        "path": "./syntaxes/vel-mdx.tmLanguage.json"
+      },
+      {
+        "language": "vel-html",
         "scopeName": "text.html.vel",
-        "path": "./syntaxes/vel.tmLanguage.json"
+        "path": "./syntaxes/vel-html.tmLanguage.json"
       }
     ],
     "configuration": {
