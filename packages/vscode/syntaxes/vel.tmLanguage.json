@@ -1,0 +1,101 @@
+{
+  "name": "Vellum",
+  "scopeName": "text.html.vel",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#block-tag" },
+    { "include": "#expression" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.block.nunjucks.vel",
+      "begin": "\\{#",
+      "end": "#\\}",
+      "patterns": []
+    },
+    "block-tag": {
+      "name": "meta.tag.block.nunjucks.vel",
+      "begin": "\\{%-?",
+      "end": "-?%\\}",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.tag.begin.nunjucks.vel" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.tag.end.nunjucks.vel" }
+      },
+      "patterns": [
+        { "include": "#keywords" },
+        { "include": "#globals" },
+        { "include": "#strings" },
+        { "include": "#numbers" },
+        { "include": "#operators" },
+        { "include": "#identifiers" }
+      ]
+    },
+    "expression": {
+      "name": "meta.tag.inline.nunjucks.vel",
+      "begin": "\\{\\{",
+      "end": "\\}\\}",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.tag.begin.nunjucks.vel" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.tag.end.nunjucks.vel" }
+      },
+      "patterns": [
+        { "include": "#globals" },
+        { "include": "#filters" },
+        { "include": "#strings" },
+        { "include": "#numbers" },
+        { "include": "#operators" },
+        { "include": "#identifiers" }
+      ]
+    },
+    "keywords": {
+      "match": "\\b(set|for|endfor|if|elif|else|endif|block|endblock|extends|include|import|from|macro|endmacro|call|endcall|filter|endfilter|raw|endraw|with)\\b",
+      "name": "keyword.control.nunjucks.vel"
+    },
+    "globals": {
+      "match": "\\b(symbol|symbols|module)\\b(?=\\s*\\()",
+      "name": "support.function.global.nunjucks.vel"
+    },
+    "filters": {
+      "match": "\\|\\s*(\\w+)",
+      "captures": {
+        "1": { "name": "support.function.filter.nunjucks.vel" }
+      }
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.nunjucks.vel",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "name": "constant.character.escape.nunjucks.vel", "match": "\\\\." }
+          ]
+        },
+        {
+          "name": "string.quoted.single.nunjucks.vel",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            { "name": "constant.character.escape.nunjucks.vel", "match": "\\\\." }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "match": "\\b\\d+(\\.\\d+)?\\b",
+      "name": "constant.numeric.nunjucks.vel"
+    },
+    "operators": {
+      "match": "\\b(in|not|and|or|is)\\b|[=!<>]=?|\\+|-|\\*|/|%",
+      "name": "keyword.operator.nunjucks.vel"
+    },
+    "identifiers": {
+      "match": "\\b[a-zA-Z_]\\w*\\b",
+      "name": "variable.other.nunjucks.vel"
+    }
+  }
+}

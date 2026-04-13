@@ -5,7 +5,7 @@ import type { RendererProfile } from './profile'
 import type { SymbolIndex } from './symbol-index'
 
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, extname, join, relative, resolve } from 'node:path'
@@ -275,29 +275,43 @@ export class Vellum {
    * packages that don't expose ./package.json in their exports map.
    */
   private readTypesFromDisk(root: string, pkg: string): string | null {
-    // Try common node_modules locations (handles hoisted and nested).
-    const candidates = [
-      join(root, 'node_modules', pkg, 'package.json'),
-    ]
+    // Try direct node_modules path first, then walk up parent directories
+    // (handles hoisted, nested, and pnpm symlinked layouts).
+    let dir: string | null = root
+    while (dir) {
+      const pkgJsonPath = join(dir, 'node_modules', pkg, 'package.json')
+      const result = this.readTypesField(pkgJsonPath)
+      if (result)
+        return result
 
-    for (const pkgJsonPath of candidates) {
-      if (!existsSync(pkgJsonPath))
-        continue
-      try {
-        const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf8'))
-        const typesField: string | undefined
-          = pkgJson.types
-            ?? pkgJson.typings
-            ?? pkgJson.exports?.['.']?.types
-        if (typesField) {
-          const resolved = resolve(dirname(pkgJsonPath), typesField)
-          if (existsSync(resolved))
-            return resolved
-        }
+      // Walk up to find hoisted node_modules
+      const parent = dirname(dir)
+      if (parent === dir)
+        break
+      dir = parent
+    }
+    return null
+  }
+
+  private readTypesField(pkgJsonPath: string): string | null {
+    if (!existsSync(pkgJsonPath))
+      return null
+    try {
+      // Follow symlinks to get the real path (pnpm uses symlinks)
+      const realPkgJsonPath = realpathSync(pkgJsonPath)
+      const pkgJson = JSON.parse(readFileSync(realPkgJsonPath, 'utf8'))
+      const typesField: string | undefined
+        = pkgJson.types
+          ?? pkgJson.typings
+          ?? pkgJson.exports?.['.']?.types
+      if (typesField) {
+        const resolved = resolve(dirname(realPkgJsonPath), typesField)
+        if (existsSync(resolved))
+          return resolved
       }
-      catch {
-        continue
-      }
+    }
+    catch {
+      // unreadable — skip
     }
     return null
   }

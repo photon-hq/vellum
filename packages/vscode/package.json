@@ -1,0 +1,60 @@
+{
+  "publisher": "photon-hq",
+  "name": "vellum-vscode",
+  "displayName": "Vellum",
+  "version": "0.1.1",
+  "private": true,
+  "description": "Language support for Vellum documentation templates (.vel files)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/photon-hq/vellum.git",
+    "directory": "packages/vscode"
+  },
+  "categories": ["Programming Languages"],
+  "main": "./dist/extension.mjs",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "activationEvents": ["onLanguage:vel"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "vel",
+        "aliases": ["Vellum", "vel"],
+        "extensions": [".vel"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "vel",
+        "scopeName": "text.html.vel",
+        "path": "./syntaxes/vel.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Vellum",
+      "properties": {
+        "vellum.configPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to vellum.config.ts (relative to workspace root). Auto-detected if empty."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsdown src/extension.ts --format esm --out-dir dist --external vscode",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "package": "vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.6.3"
+  }
+}

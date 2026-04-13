@@ -9,7 +9,8 @@
       "@vellum-docs/engine-nunjucks",
       "@vellum-docs/profile-markdown",
       "@vellum-docs/profile-mintlify",
-      "@vellum-docs/cli"
+      "@vellum-docs/cli",
+      "@vellum-docs/language-server"
     ]
   ],
   "linked": [],

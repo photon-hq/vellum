@@ -1,11 +1,11 @@
 {
-  "name": "@vellum-docs/cli",
+  "name": "@vellum-docs/language-server",
   "type": "module",
   "version": "0.1.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/photon-hq/vellum.git",
-    "directory": "packages/cli"
+    "directory": "packages/language-server"
   },
   "exports": {
     ".": {
@@ -16,18 +16,18 @@
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "bin": {
-    "vellum": "./dist/bin.mjs"
+    "vellum-language-server": "./dist/server.mjs"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
-    "build": "tsdown src/index.ts src/bin.ts --format esm --out-dir dist --dts",
+    "build": "tsdown src/index.ts src/server.ts --format esm --out-dir dist --dts",
     "clean": "rm -rf dist",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@vellum-docs/core": "workspace:*"
+    "@vellum-docs/core": "workspace:*",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
   },
   "devDependencies": {
     "typescript": "^5.6.3"
