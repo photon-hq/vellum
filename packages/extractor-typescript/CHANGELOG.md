@@ -1,5 +1,12 @@
 # @vellum-docs/extractor-typescript
 
+## 0.1.1
+
+### Patch Changes
+
+- d2c7db5: Add a parsing strategy to directly read package.json
+  - @vellum-docs/core@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
