@@ -11,5 +11,6 @@ export default antfu({
     'examples/**/docs/**',
     'examples/**/app/docs/reference/**',
     '**/*.vel',
+    'test/fixtures/**',
   ],
 })

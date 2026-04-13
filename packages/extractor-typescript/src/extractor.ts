@@ -1,5 +1,6 @@
 import type { ExtractInput, Extractor, Symbol as VSymbol } from '@vellum-docs/core'
 
+import { realpathSync } from 'node:fs'
 import ts from 'typescript'
 
 import { collectNames, extractFromFile } from './walk'
@@ -61,7 +62,13 @@ export class TypeScriptExtractor implements Extractor {
     // First pass: collect names across all files for cross-ref resolution.
     const allNames = new Map<string, string>()
     for (const rootName of allRootNames) {
-      const sf = program.getSourceFile(rootName)
+      let sf = program.getSourceFile(rootName)
+      if (!sf) {
+        try {
+          sf = program.getSourceFile(realpathSync(rootName))
+        }
+        catch {}
+      }
       if (!sf)
         continue
       const moduleOverride = packageModuleMap.get(rootName)
@@ -82,8 +89,17 @@ export class TypeScriptExtractor implements Extractor {
     }
 
     // Package .d.ts files — these ARE declaration files, extract them.
+    // Use realpathSync because pnpm symlinks workspace packages and the
+    // TS compiler resolves symlinks internally, so getSourceFile() with
+    // the symlink path may return undefined.
     for (const pf of packageFiles) {
-      const sf = program.getSourceFile(pf.file)
+      let sf = program.getSourceFile(pf.file)
+      if (!sf) {
+        try {
+          sf = program.getSourceFile(realpathSync(pf.file))
+        }
+        catch {}
+      }
       if (!sf)
         continue
       const symbols = extractFromFile(sf, checker, input.root, allNames, pf.packageName)
