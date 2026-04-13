@@ -1,6 +1,5 @@
-import { mkdirSync, rmSync, symlinkSync } from 'node:fs'
-import { join, resolve } from 'node:path'
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { resolve } from 'node:path'
+import { describe, expect, it, vi } from 'vitest'
 import { TypeScriptExtractor } from '../../extractor-typescript/src'
 import { NunjucksEngine } from '../../engine-nunjucks/src'
 import { MarkdownProfile } from '../../profile-markdown/src'
@@ -8,21 +7,6 @@ import { InMemoryCache, Vellum } from '../src'
 import type { VellumConfig } from '../src'
 
 const RESOLVE_ROOT = resolve(__dirname, '../../../test/fixtures/resolve-test')
-const PACKAGES_DIR = join(RESOLVE_ROOT, 'packages')
-const NODE_MODULES = join(RESOLVE_ROOT, 'node_modules')
-
-// Create node_modules symlinks from the committed packages/ fixtures
-// before tests, remove after.
-beforeAll(() => {
-  mkdirSync(join(NODE_MODULES, '@types'), { recursive: true })
-  symlinkSync(join(PACKAGES_DIR, 'strat2-pkg'), join(NODE_MODULES, 'strat2-pkg'), 'dir')
-  symlinkSync(join(PACKAGES_DIR, 'strat3-pkg'), join(NODE_MODULES, 'strat3-pkg'), 'dir')
-  symlinkSync(join(PACKAGES_DIR, '@types/strat4-pkg'), join(NODE_MODULES, '@types/strat4-pkg'), 'dir')
-})
-
-afterAll(() => {
-  rmSync(NODE_MODULES, { recursive: true, force: true })
-})
 
 function makeConfig(overrides: Partial<VellumConfig>): VellumConfig {
   return {

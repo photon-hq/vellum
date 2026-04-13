@@ -1,4 +1,6 @@
 {
   "name": "@types/strat4-pkg",
+  "version": "0.0.0",
+  "private": true,
   "types": "./index.d.ts"
 }

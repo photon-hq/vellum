@@ -1,4 +1,9 @@
 {
   "name": "resolve-test",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "strat2-pkg": "workspace:*",
+    "strat3-pkg": "workspace:*",
+    "@types/strat4-pkg": "workspace:*"
+  }
 }
