@@ -1,5 +1,12 @@
 # @vellum-docs/extractor-typescript
 
+## 0.2.1
+
+### Patch Changes
+
+- 65e5344: Fix re-export alias handling: use the public export name (e.g. `AttachmentInfo`) instead of the internal declaration name (e.g. `AttachmentInfo$1`) when extracting symbols from package `.d.ts` files with `export { X as Y }` patterns.
+  - @vellum-docs/core@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
