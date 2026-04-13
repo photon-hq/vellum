@@ -3,6 +3,7 @@ dist/
 *.tsbuildinfo
 .DS_Store
 .turbo/
+coverage/
 
 # Next.js build artifacts
 .next/

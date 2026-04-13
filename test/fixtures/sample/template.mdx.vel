@@ -1,0 +1,10 @@
+# Test
+
+{% set u = symbol("ts:types.ts#User") %}
+## {{ u.name }}
+
+{{ u.doc.summary }}
+
+{% for c in symbols({ module: "types.ts", kind: "const" }) %}
+- {{ c.name }}: {{ c.value.text }}
+{% endfor %}

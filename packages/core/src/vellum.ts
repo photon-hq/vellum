@@ -188,20 +188,21 @@ export class Vellum {
   ): PackageFile[] {
     if (packages.length === 0)
       return []
-    const require = createRequire(resolve(root, 'package.json'))
+    const req = createRequire(resolve(root, 'package.json'))
     const results: PackageFile[] = []
 
     for (const pkg of packages) {
       try {
-        // Try resolving as a types entry: package/index.d.ts or @types/package
-        const resolved = this.resolvePackageTypes(require, pkg)
+        const resolved = this.resolvePackageTypes(root, req, pkg)
         if (resolved) {
           results.push({ file: resolved, packageName: pkg })
         }
+        else {
+          console.warn(`vellum: could not resolve types for package "${pkg}" — skipping`)
+        }
       }
-      catch {
-        // Silently skip unresolvable packages — the user might not have
-        // installed them yet. A future `vellum check` command would catch this.
+      catch (err) {
+        console.warn(`vellum: failed to resolve package "${pkg}" — ${err instanceof Error ? err.message : err}`)
       }
     }
     return results
@@ -209,12 +210,22 @@ export class Vellum {
 
   /**
    * Try to find the .d.ts entry point for a package. Resolution order:
-   * 1. require.resolve("pkg/package.json") → read `types`/`typings` field
-   * 2. require.resolve("pkg") with .d.ts extensions
-   * 3. require.resolve("@types/pkg") as fallback
+   * 1. Read package.json directly from node_modules (bypasses exports map)
+   * 2. require.resolve("pkg/package.json") → read `types`/`typings` field
+   * 3. require.resolve("pkg") with .d.ts extensions
+   * 4. require.resolve("@types/pkg") as fallback
    */
-  private resolvePackageTypes(req: NodeRequire, pkg: string): string | null {
-    // Strategy 1: read the package's own package.json for types/typings field.
+  private resolvePackageTypes(root: string, req: NodeRequire, pkg: string): string | null {
+    // Strategy 1: read package.json from disk, bypassing Node's exports
+    // enforcement. ESM-only packages with strict exports maps often don't
+    // expose ./package.json, causing require.resolve("pkg/package.json")
+    // to throw ERR_PACKAGE_PATH_NOT_EXPORTED.
+    const typesFromDisk = this.readTypesFromDisk(root, pkg)
+    if (typesFromDisk)
+      return typesFromDisk
+
+    // Strategy 2: require.resolve("pkg/package.json") — works for packages
+    // that do expose package.json in their exports map.
     try {
       const pkgJsonPath = req.resolve(`${pkg}/package.json`)
       const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf8'))
@@ -225,16 +236,16 @@ export class Vellum {
       }
     }
     catch {
-      // no package.json — try other strategies
+      // package.json not resolvable via require — already tried disk
     }
 
-    // Strategy 2: try resolving the package directly — works when main is a .d.ts.
+    // Strategy 3: require.resolve the package directly — works when main
+    // points to a .d.ts or has a co-located .d.ts.
     try {
       const resolved = req.resolve(pkg)
       if (resolved.endsWith('.d.ts') || resolved.endsWith('.d.mts') || resolved.endsWith('.d.cts')) {
         return resolved
       }
-      // The main might be .js — look for a co-located .d.ts
       const dtsPath = resolved.replace(RE_JS_EXT, '.d.ts')
       if (existsSync(dtsPath))
         return dtsPath
@@ -243,15 +254,51 @@ export class Vellum {
       // not resolvable
     }
 
-    // Strategy 3: @types/pkg fallback.
+    // Strategy 4: @types/pkg fallback — try disk first, then require.resolve.
+    const atTypes = `@types/${pkg.startsWith('@') ? pkg.slice(1).replace('/', '__') : pkg}`
+    const atTypesDisk = this.readTypesFromDisk(root, atTypes)
+    if (atTypesDisk)
+      return atTypesDisk
     try {
-      const atTypes = `@types/${pkg.startsWith('@') ? pkg.slice(1).replace('/', '__') : pkg}`
       return req.resolve(atTypes)
     }
     catch {
       // no @types either
     }
 
+    return null
+  }
+
+  /**
+   * Read a package's types entry by looking at its package.json on disk,
+   * bypassing Node module resolution entirely. This handles ESM-only
+   * packages that don't expose ./package.json in their exports map.
+   */
+  private readTypesFromDisk(root: string, pkg: string): string | null {
+    // Try common node_modules locations (handles hoisted and nested).
+    const candidates = [
+      join(root, 'node_modules', pkg, 'package.json'),
+    ]
+
+    for (const pkgJsonPath of candidates) {
+      if (!existsSync(pkgJsonPath))
+        continue
+      try {
+        const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf8'))
+        const typesField: string | undefined
+          = pkgJson.types
+            ?? pkgJson.typings
+            ?? pkgJson.exports?.['.']?.types
+        if (typesField) {
+          const resolved = resolve(dirname(pkgJsonPath), typesField)
+          if (existsSync(resolved))
+            return resolved
+        }
+      }
+      catch {
+        continue
+      }
+    }
     return null
   }
 

@@ -1,0 +1,4 @@
+{
+  "name": "@types/strat4-pkg",
+  "types": "./index.d.ts"
+}
