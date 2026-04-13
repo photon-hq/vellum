@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import {
   createConnection,
+  DidChangeWatchedFilesNotification,
   TextDocuments,
   TextDocumentSyncKind,
 } from 'vscode-languageserver/node'
@@ -51,16 +52,12 @@ connection.onInitialized(async () => {
   connection.console.log(`Vellum: Indexed ${result.symbolCount} symbols`)
 
   // Register file watchers
-  connection.client.register({
-    id: 'vellum-file-watcher',
-    method: 'workspace/didChangeWatchedFiles',
-    registerOptions: {
-      watchers: [
-        { globPattern: '**/*.ts' },
-        { globPattern: '**/*.tsx' },
-        { globPattern: 'vellum.config.*' },
-      ],
-    },
+  connection.client.register(DidChangeWatchedFilesNotification.type, {
+    watchers: [
+      { globPattern: '**/*.ts' },
+      { globPattern: '**/*.tsx' },
+      { globPattern: 'vellum.config.*' },
+    ],
   })
 
   // Publish initial diagnostics for open documents
