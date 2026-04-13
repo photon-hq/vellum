@@ -1,5 +1,17 @@
 # vellum-example-basic
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [65e5344]
+  - @vellum-docs/extractor-typescript@0.2.1
+  - @vellum-docs/core@0.2.1
+  - @vellum-docs/engine-nunjucks@0.2.1
+  - @vellum-docs/profile-markdown@0.2.1
+  - @vellum-docs/profile-mintlify@0.2.1
+  - @vellum-docs/cli@0.2.1
+
 ## 0.0.3
 
 ### Patch Changes
