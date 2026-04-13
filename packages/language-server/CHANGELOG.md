@@ -1,4 +1,4 @@
-# @vellum-docs/core
+# @vellum-docs/language-server
 
 ## 0.2.0
 
@@ -11,17 +11,7 @@
   - Add `language` field to `SymbolQuery`
   - Add disk cache (`DiskCache`) at `node_modules/.cache/vellum/`
 
-## 0.1.1
+### Patch Changes
 
-## 0.1.0
-
-### Minor Changes
-
-- 04fb926: Initial release of Vellum.
-
-  - TypeScript extractor with full type checker support and TSDoc parsing
-  - Nunjucks template engine with symbol/symbols/module globals and filters
-  - Markdown and Mintlify renderer profiles
-  - Package extraction from npm dependencies via `.d.ts` resolution
-  - Disk-backed symbol cache at `node_modules/.cache/vellum/`
-  - CLI: `vellum build`
+- Updated dependencies [852d257]
+  - @vellum-docs/core@0.2.0
