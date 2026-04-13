@@ -1,5 +1,5 @@
 /** A mutable counter. */
-export let counter = 0
+export const counter = 0
 
 /** An inferred-type constant (no annotation). */
 export const inferred = { a: 1, b: 'hello' }

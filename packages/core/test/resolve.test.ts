@@ -1,10 +1,10 @@
+import type { VellumConfig } from '../src'
 import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { TypeScriptExtractor } from '../../extractor-typescript/src'
 import { NunjucksEngine } from '../../engine-nunjucks/src'
+import { TypeScriptExtractor } from '../../extractor-typescript/src'
 import { MarkdownProfile } from '../../profile-markdown/src'
 import { InMemoryCache, Vellum } from '../src'
-import type { VellumConfig } from '../src'
 
 const RESOLVE_ROOT = resolve(__dirname, '../../../test/fixtures/resolve-test')
 

@@ -4,7 +4,7 @@ import { TypeScriptExtractor } from '../src'
 
 const FIXTURES = resolve(__dirname, '../../../test/fixtures/sample')
 
-describe('TypeScriptExtractor — variables', () => {
+describe('typeScriptExtractor — variables', () => {
   const extractor = new TypeScriptExtractor()
 
   it('extracts let as mutable variable', async () => {

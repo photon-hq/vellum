@@ -4,7 +4,7 @@ import { TypeScriptExtractor } from '../src'
 
 const FIXTURES = resolve(__dirname, '../../../test/fixtures/sample')
 
-describe('TypeScriptExtractor — classes', () => {
+describe('typeScriptExtractor — classes', () => {
   const extractor = new TypeScriptExtractor()
 
   it('extracts classes with members', async () => {
@@ -96,7 +96,7 @@ describe('TypeScriptExtractor — classes', () => {
       config: undefined,
     })
 
-    const internal = symbols.find(s => s.name === 'InternalHelper')
+    const internal = symbols.find(s => s.name === '_InternalHelper')
     expect(internal).toBeDefined()
     expect(internal!.exported).toBe(false)
   })

@@ -4,7 +4,7 @@ import { TypeScriptExtractor } from '../src'
 
 const FIXTURES = resolve(__dirname, '../../../test/fixtures/sample')
 
-describe('TypeScriptExtractor', () => {
+describe('typeScriptExtractor', () => {
   const extractor = new TypeScriptExtractor()
 
   it('has correct language and extensions', () => {

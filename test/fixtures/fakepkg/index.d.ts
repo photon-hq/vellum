@@ -1,1 +1,1 @@
-export { Widget, createWidget } from './internal';
+export { createWidget, Widget } from './internal'

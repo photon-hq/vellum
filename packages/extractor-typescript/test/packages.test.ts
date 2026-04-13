@@ -5,7 +5,7 @@ import { TypeScriptExtractor } from '../src'
 const FIXTURES = resolve(__dirname, '../../../test/fixtures')
 const FAKEPKG = resolve(FIXTURES, 'fakepkg/index.d.ts')
 
-describe('TypeScriptExtractor — package extraction', () => {
+describe('typeScriptExtractor — package extraction', () => {
   const extractor = new TypeScriptExtractor()
 
   it('extracts symbols from .d.ts barrel files via module exports', async () => {

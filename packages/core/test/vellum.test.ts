@@ -1,12 +1,12 @@
+import type { VellumConfig } from '../src'
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { TypeScriptExtractor } from '../../extractor-typescript/src'
 import { NunjucksEngine } from '../../engine-nunjucks/src'
+import { TypeScriptExtractor } from '../../extractor-typescript/src'
 import { MarkdownProfile } from '../../profile-markdown/src'
 import { DiskCache, InMemoryCache, Vellum } from '../src'
-import type { VellumConfig } from '../src'
 
 const FIXTURES = resolve(__dirname, '../../../test/fixtures/sample')
 
@@ -22,7 +22,7 @@ function makeConfig(overrides: Partial<VellumConfig> & { root: string }): Vellum
   }
 }
 
-describe('Vellum orchestrator', () => {
+describe('vellum orchestrator', () => {
   let tempDir: string
 
   beforeEach(() => {

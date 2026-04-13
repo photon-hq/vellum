@@ -5,7 +5,7 @@ trustPolicy: no-downgrade
 packages:
   - 'packages/*'
   - 'examples/*'
-  - 'test/fixtures/resolve-test'
-  - 'test/fixtures/resolve-test/packages/strat2-pkg'
-  - 'test/fixtures/resolve-test/packages/strat3-pkg'
-  - 'test/fixtures/resolve-test/packages/@types/strat4-pkg'
+  - test/fixtures/resolve-test
+  - test/fixtures/resolve-test/packages/strat2-pkg
+  - test/fixtures/resolve-test/packages/strat3-pkg
+  - test/fixtures/resolve-test/packages/@types/strat4-pkg

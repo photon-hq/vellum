@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { InMemorySymbolIndex, emptyDocComment } from '../src'
 import type { Symbol } from '../src'
+import { describe, expect, it } from 'vitest'
+import { emptyDocComment, InMemorySymbolIndex } from '../src'
 
 function makeSym(overrides: Partial<Symbol> & { id: string, name: string }): Symbol {
   return {
@@ -18,7 +18,7 @@ function makeSym(overrides: Partial<Symbol> & { id: string, name: string }): Sym
   }
 }
 
-describe('InMemorySymbolIndex', () => {
+describe('inMemorySymbolIndex', () => {
   it('adds and retrieves symbols by id', () => {
     const index = new InMemorySymbolIndex()
     const sym = makeSym({ id: 'ts:src/types.ts#User', name: 'User' })

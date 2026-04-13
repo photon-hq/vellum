@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
 import type { Symbol } from '../../core/src'
-import { InMemorySymbolIndex, emptyDocComment } from '../../core/src'
+import { describe, expect, it } from 'vitest'
+import { emptyDocComment, InMemorySymbolIndex } from '../../core/src'
 import { MarkdownProfile } from '../../profile-markdown/src'
 import { NunjucksEngine } from '../src'
 

@@ -1,9 +1,9 @@
+import type { CacheEntry, Symbol } from '../src'
 import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { DiskCache, emptyDocComment } from '../src'
-import type { CacheEntry, Symbol } from '../src'
 
 function makeSym(name: string): Symbol {
   return {
@@ -26,7 +26,7 @@ function makeEntry(file: string, hash: string, symbols: Symbol[]): CacheEntry {
   return { key: { language: 'ts', file, hash }, symbols }
 }
 
-describe('DiskCache — invalidation and edge cases', () => {
+describe('diskCache — invalidation and edge cases', () => {
   let tempRoot: string
   let cacheDir: string
 
@@ -87,8 +87,7 @@ describe('DiskCache — invalidation and edge cases', () => {
   it('writes multiple entries and reads them all back', async () => {
     const cache = new DiskCache(tempRoot)
     const entries = Array.from({ length: 10 }, (_, i) =>
-      makeEntry(`file${i}.ts`, `hash${i}`, [makeSym(`Sym${i}`)]),
-    )
+      makeEntry(`file${i}.ts`, `hash${i}`, [makeSym(`Sym${i}`)]))
 
     for (const entry of entries)
       await cache.set(entry)

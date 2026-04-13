@@ -3,12 +3,12 @@
  */
 export interface Widget {
   /** Widget identifier. */
-  id: string;
+  id: string
   /** Display label. */
-  label: string;
+  label: string
 }
 
 /**
  * Create a new widget.
  */
-export declare function createWidget(label: string): Widget;
+export declare function createWidget(label: string): Widget

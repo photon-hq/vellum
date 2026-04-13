@@ -1,9 +1,9 @@
+import type { CacheEntry, Symbol } from '../src'
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { DiskCache, InMemoryCache, emptyDocComment } from '../src'
-import type { CacheEntry, Symbol } from '../src'
+import { DiskCache, emptyDocComment, InMemoryCache } from '../src'
 
 function makeSym(name: string): Symbol {
   return {
@@ -26,7 +26,7 @@ function makeEntry(file: string, hash: string, symbols: Symbol[]): CacheEntry {
   return { key: { language: 'ts', file, hash }, symbols }
 }
 
-describe('InMemoryCache', () => {
+describe('inMemoryCache', () => {
   it('stores and retrieves entries', async () => {
     const cache = new InMemoryCache()
     const entry = makeEntry('a.ts', 'abc123', [makeSym('A')])
@@ -70,7 +70,7 @@ describe('InMemoryCache', () => {
   })
 })
 
-describe('DiskCache', () => {
+describe('diskCache', () => {
   let tempRoot: string
 
   beforeEach(() => {
