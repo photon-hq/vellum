@@ -9,6 +9,14 @@
       "dependsOn": ["^build"],
       "outputs": ["docs/**", "app/docs/**"]
     },
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
     "typecheck": {
       "dependsOn": ["^build"]
     },
