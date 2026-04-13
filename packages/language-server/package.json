@@ -1,7 +1,7 @@
 {
   "name": "@vellum-docs/language-server",
   "type": "module",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/photon-hq/vellum.git",
@@ -18,7 +18,9 @@
   "bin": {
     "vellum-language-server": "./dist/server.mjs"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsdown src/index.ts src/server.ts --format esm --out-dir dist --dts",
     "clean": "rm -rf dist",
