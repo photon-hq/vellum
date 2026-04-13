@@ -487,6 +487,10 @@ function extractFromModuleExports(sourceFile: ts.SourceFile, checker: ts.TypeChe
   const results: VSymbol[] = []
 
   for (const sym of exports) {
+    // The public export name — may differ from the declaration name
+    // when re-exported with an alias (e.g. `export { Foo$1 as Foo }`).
+    const exportName = sym.name
+
     // Resolve aliases (re-exports).
     const resolved
       = sym.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(sym) : sym
@@ -505,33 +509,37 @@ function extractFromModuleExports(sourceFile: ts.SourceFile, checker: ts.TypeChe
       forceExported: true,
     }
 
+    let extracted: VSymbol | null = null
+
     if (ts.isInterfaceDeclaration(decl)) {
-      results.push(extractInterface(decl, declCtx))
+      extracted = extractInterface(decl, declCtx)
     }
     else if (ts.isTypeAliasDeclaration(decl)) {
-      results.push(extractTypeAlias(decl, declCtx))
+      extracted = extractTypeAlias(decl, declCtx)
     }
     else if (ts.isFunctionDeclaration(decl)) {
-      const s = extractFunction(decl, declCtx)
-      if (s)
-        results.push(s)
+      extracted = extractFunction(decl, declCtx)
     }
     else if (ts.isVariableDeclaration(decl)) {
-      // Find the parent VariableStatement for the export/const checks.
       const stmt = decl.parent?.parent
-      if (stmt && ts.isVariableStatement(stmt)) {
-        const s = extractVariable(stmt, decl, declCtx)
-        if (s)
-          results.push(s)
-      }
+      if (stmt && ts.isVariableStatement(stmt))
+        extracted = extractVariable(stmt, decl, declCtx)
     }
     else if (ts.isEnumDeclaration(decl)) {
-      results.push(extractEnum(decl, declCtx))
+      extracted = extractEnum(decl, declCtx)
     }
     else if (ts.isClassDeclaration(decl)) {
-      const s = extractClass(decl, declCtx)
-      if (s)
-        results.push(s)
+      extracted = extractClass(decl, declCtx)
+    }
+
+    // Override name and id with the public export name, which may
+    // differ from the declaration name due to re-export aliasing.
+    if (extracted) {
+      if (extracted.name !== exportName) {
+        extracted.name = exportName
+        extracted.id = makeId(ctx.modulePath, exportName)
+      }
+      results.push(extracted)
     }
   }
   return results
