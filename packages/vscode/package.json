@@ -10,7 +10,9 @@
     "url": "https://github.com/photon-hq/vellum.git",
     "directory": "packages/vscode"
   },
-  "categories": ["Programming Languages"],
+  "categories": [
+    "Programming Languages"
+  ],
   "main": "./dist/extension.mjs",
   "engines": {
     "vscode": "^1.85.0"
@@ -19,26 +21,42 @@
     "languages": [
       {
         "id": "vel",
-        "aliases": ["Vellum"],
-        "extensions": [".vel"],
+        "aliases": [
+          "Vellum"
+        ],
+        "extensions": [
+          ".vel"
+        ],
         "configuration": "./language-configuration.json"
       },
       {
         "id": "vel-md",
-        "aliases": ["Vellum (Markdown)"],
-        "filenamePatterns": ["*.md.vel"],
+        "aliases": [
+          "Vellum (Markdown)"
+        ],
+        "filenamePatterns": [
+          "*.md.vel"
+        ],
         "configuration": "./language-configuration.json"
       },
       {
         "id": "vel-mdx",
-        "aliases": ["Vellum (MDX)"],
-        "filenamePatterns": ["*.mdx.vel"],
+        "aliases": [
+          "Vellum (MDX)"
+        ],
+        "filenamePatterns": [
+          "*.mdx.vel"
+        ],
         "configuration": "./language-configuration.json"
       },
       {
         "id": "vel-html",
-        "aliases": ["Vellum (HTML)"],
-        "filenamePatterns": ["*.html.vel"],
+        "aliases": [
+          "Vellum (HTML)"
+        ],
+        "filenamePatterns": [
+          "*.html.vel"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -76,6 +94,7 @@
     }
   },
   "scripts": {
+    "prepare": "pnpm build",
     "build": "tsdown src/extension.ts --format esm --out-dir dist --external vscode",
     "clean": "rm -rf dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",

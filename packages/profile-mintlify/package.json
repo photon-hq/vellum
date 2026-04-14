@@ -19,6 +19,7 @@
     "dist"
   ],
   "scripts": {
+    "prepare": "pnpm build",
     "build": "tsdown src/index.ts --format esm --out-dir dist --dts",
     "clean": "rm -rf dist",
     "typecheck": "tsc -p tsconfig.json --noEmit"
