@@ -3,6 +3,7 @@ import type { TemplateEngine } from './engine'
 import type { Extractor, PackageFile } from './extractor'
 import type { RendererProfile } from './profile'
 import type { SymbolIndex } from './symbol-index'
+import type { Symbol } from './types'
 
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
@@ -86,7 +87,8 @@ export class Vellum {
       const packageFiles = this.resolvePackages(root, langConfig.packages ?? [], extractor.extensions)
 
       const fresh: string[] = []
-      const cachedSymbols: import('./types.js').Symbol[] = []
+      const freshPackageFiles: PackageFile[] = []
+      const cachedSymbols: Symbol[] = []
 
       for (const file of files) {
         const hash = await hashFile(file)
@@ -103,18 +105,35 @@ export class Vellum {
         }
       }
 
-      let extracted: import('./types.js').Symbol[] = []
-      const hasWork = fresh.length > 0 || packageFiles.length > 0
+      // Check package files against cache too — unchanged .d.ts files skip
+      // extraction entirely (previously they were always re-extracted).
+      for (const pf of packageFiles) {
+        const hash = await hashFile(pf.file)
+        const entry = await this.cache.get({
+          language: extractor.language,
+          file: pf.file,
+          hash,
+        })
+        if (entry) {
+          cachedSymbols.push(...entry.symbols)
+        }
+        else {
+          freshPackageFiles.push(pf)
+        }
+      }
+
+      let extracted: Symbol[] = []
+      const hasWork = fresh.length > 0 || freshPackageFiles.length > 0
       if (hasWork) {
         extracted = await extractor.extract({
           files: fresh,
           root,
           config: this.config.extractorConfig?.[extractor.language],
-          packageFiles: packageFiles.length > 0 ? packageFiles : undefined,
+          packageFiles: freshPackageFiles.length > 0 ? freshPackageFiles : undefined,
         })
 
         // Re-bin extracted symbols back into per-file cache entries.
-        const byFile = new Map<string, import('./types.js').Symbol[]>()
+        const byFile = new Map<string, Symbol[]>()
         for (const s of extracted) {
           const abs = resolve(root, s.source.file)
           const list = byFile.get(abs) ?? []
@@ -126,6 +145,19 @@ export class Vellum {
           await this.cache.set({
             key: { language: extractor.language, file, hash },
             symbols: byFile.get(file) ?? [],
+          })
+        }
+        // Cache package files — resolve symlinks to match the path TS uses.
+        for (const pf of freshPackageFiles) {
+          const hash = await hashFile(pf.file)
+          let resolvedFile = pf.file
+          try {
+            resolvedFile = realpathSync(pf.file)
+          }
+          catch { /* non-fatal */ }
+          await this.cache.set({
+            key: { language: extractor.language, file: pf.file, hash },
+            symbols: byFile.get(pf.file) ?? byFile.get(resolvedFile) ?? [],
           })
         }
       }

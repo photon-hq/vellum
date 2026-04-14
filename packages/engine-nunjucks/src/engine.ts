@@ -20,6 +20,15 @@ export interface NunjucksEngineOptions {
 
   /** Override the source extension (default `.vel`). */
   sourceExtension?: string
+
+  /**
+   * Enable HTML auto-escaping (default `false`).
+   *
+   * Markdown targets are safe with `false` because the renderer handles
+   * escaping.  Set to `true` when targeting `.html` files to prevent XSS
+   * from TSDoc summaries containing raw HTML.
+   */
+  autoescape?: boolean
 }
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -29,30 +38,35 @@ export class NunjucksEngine implements TemplateEngine {
   readonly name = 'nunjucks'
   readonly sourceExtension: string
 
-  private readonly searchPaths: string[]
-  private readonly extraGlobals: Record<string, unknown>
-  private readonly extraFilters: Record<string, (...args: unknown[]) => unknown>
+  /**
+   * Shared Nunjucks environment — built once in the constructor so that
+   * N template renders don't recreate N loaders + N environments.
+   * Context-dependent globals/filters are updated in-place before each
+   * render (addGlobal/addFilter replaces by key, so this is safe).
+   */
+  private readonly env: nunjucks.Environment
 
   constructor(opts: NunjucksEngineOptions = {}) {
     this.sourceExtension = opts.sourceExtension ?? '.vel'
-    this.searchPaths = [builtinPartialsDir, ...(opts.searchPaths ?? [])]
-    this.extraGlobals = opts.globals ?? {}
-    this.extraFilters = opts.filters ?? {}
-  }
 
-  async render(source: string, ctx: TemplateContext): Promise<string> {
-    const env = new nunjucks.Environment(
-      new nunjucks.FileSystemLoader(this.searchPaths, {
+    const searchPaths = [builtinPartialsDir, ...(opts.searchPaths ?? [])]
+    this.env = new nunjucks.Environment(
+      new nunjucks.FileSystemLoader(searchPaths, {
         noCache: true,
         watch: false,
       }),
-      { autoescape: false, throwOnUndefined: false, trimBlocks: false, lstripBlocks: false },
+      {
+        autoescape: opts.autoescape ?? false,
+        throwOnUndefined: false,
+        trimBlocks: false,
+        lstripBlocks: false,
+      },
     )
 
     // Path alias: `{% include "@vellum-docs/partials/..." %}` → built-in partials dir.
     type GetTemplateFn = (name: string, ...rest: unknown[]) => unknown
-    const originalGetTemplate = (env as unknown as { getTemplate: GetTemplateFn }).getTemplate.bind(env);
-    (env as unknown as { getTemplate: GetTemplateFn }).getTemplate = function (
+    const originalGetTemplate = (this.env as unknown as { getTemplate: GetTemplateFn }).getTemplate.bind(this.env);
+    (this.env as unknown as { getTemplate: GetTemplateFn }).getTemplate = function (
       name: string,
       ...rest: unknown[]
     ) {
@@ -62,16 +76,23 @@ export class NunjucksEngine implements TemplateEngine {
       return originalGetTemplate(resolved, ...rest)
     }
 
+    // Register static extra globals and filters once.
+    const extraGlobals = opts.globals ?? {}
+    const extraFilters = opts.filters ?? {}
+    for (const [k, v] of Object.entries(extraGlobals)) this.env.addGlobal(k, v as never)
+    for (const [k, v] of Object.entries(extraFilters)) this.env.addFilter(k, v)
+  }
+
+  async render(source: string, ctx: TemplateContext): Promise<string> {
+    // Update context-specific globals and filters for this render call.
     const globals = buildGlobals(ctx)
-    for (const [k, v] of Object.entries(globals)) env.addGlobal(k, v as never)
-    for (const [k, v] of Object.entries(this.extraGlobals)) env.addGlobal(k, v as never)
+    for (const [k, v] of Object.entries(globals)) this.env.addGlobal(k, v as never)
 
     const filters = buildFilters(ctx)
-    for (const [k, v] of Object.entries(filters)) env.addFilter(k, v)
-    for (const [k, v] of Object.entries(this.extraFilters)) env.addFilter(k, v)
+    for (const [k, v] of Object.entries(filters)) this.env.addFilter(k, v)
 
     return new Promise<string>((resolvePromise, reject) => {
-      env.renderString(source, {}, (err, result) => {
+      this.env.renderString(source, {}, (err, result) => {
         if (err)
           reject(err)
         else resolvePromise(result ?? '')

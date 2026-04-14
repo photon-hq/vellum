@@ -3,6 +3,7 @@ import type { ExtractInput, Extractor, Symbol as VSymbol } from '@vellum-docs/co
 import { realpathSync } from 'node:fs'
 import ts from 'typescript'
 
+import { moduleOf } from './util'
 import { collectNames, extractFromFile } from './walk'
 
 export interface TypeScriptExtractorOptions {
@@ -60,7 +61,9 @@ export class TypeScriptExtractor implements Extractor {
     }
 
     // First pass: collect names across all files for cross-ref resolution.
-    const allNames = new Map<string, string>()
+    // Indexed as name → (module → id) so that identically-named symbols in
+    // different modules don't silently shadow each other.
+    const allNames = new Map<string, Map<string, string>>()
     for (const rootName of allRootNames) {
       let sf = program.getSourceFile(rootName)
       if (!sf) {
@@ -72,8 +75,16 @@ export class TypeScriptExtractor implements Extractor {
       if (!sf)
         continue
       const moduleOverride = packageModuleMap.get(rootName)
+      const modulePath = moduleOverride ?? moduleOf(input.root, sf.fileName)
       const names = collectNames(sf, input.root, moduleOverride)
-      for (const [k, v] of names) allNames.set(k, v)
+      for (const [name, id] of names) {
+        let byModule = allNames.get(name)
+        if (!byModule) {
+          byModule = new Map()
+          allNames.set(name, byModule)
+        }
+        byModule.set(modulePath, id)
+      }
     }
 
     // Second pass: extract symbols.

@@ -23,8 +23,6 @@ import {
 } from './util'
 
 // Module-level regex constants (eslint: e18e/prefer-static-regex)
-const RE_STRING_LITERAL = /^".*"$|^'.*'$|^`.*`$/
-const RE_NUMBER_LITERAL = /^-?\d+(?:\.\d+)?$/
 const RE_TRAILING_SEMI = /;$/
 const RE_LEADING_AT = /^@/
 
@@ -33,8 +31,13 @@ interface WalkContext {
   sourceFile: ts.SourceFile
   modulePath: string
   root: string
-  /** Map of qualified name → id, populated in a first pass for cross-ref resolution. */
-  knownNames: Map<string, string>
+  /**
+   * Map of identifier name → (module path → symbol id).
+   * Indexed by module so that same-named symbols in different files don't
+   * silently shadow each other — resolution prefers the current module,
+   * falling back to unambiguous cross-module references.
+   */
+  knownNames: Map<string, Map<string, string>>
   /** When true, all symbols are treated as exported (package extraction mode). */
   forceExported?: boolean
 }
@@ -48,26 +51,32 @@ function docOrEmpty(node: ts.Node, sourceFile: ts.SourceFile): DocComment {
   return raw ? parseTSDoc(raw) : emptyDocComment()
 }
 
-function literalFromText(text: string): Literal {
-  const trimmed = text.trim()
-  if (RE_STRING_LITERAL.test(trimmed)) {
-    return { kind: 'string', text: trimmed, value: trimmed.slice(1, -1) }
-  }
-  if (RE_NUMBER_LITERAL.test(trimmed)) {
-    return { kind: 'number', text: trimmed, value: Number(trimmed) }
-  }
-  if (trimmed === 'true' || trimmed === 'false') {
-    return { kind: 'boolean', text: trimmed, value: trimmed === 'true' }
-  }
-  if (trimmed === 'null')
-    return { kind: 'null', text: trimmed }
-  if (trimmed === 'undefined')
-    return { kind: 'undefined', text: trimmed }
-  if (trimmed.startsWith('{'))
-    return { kind: 'object', text: trimmed }
-  if (trimmed.startsWith('['))
-    return { kind: 'array', text: trimmed }
-  return { kind: 'expression', text: trimmed }
+/**
+ * Derive a Literal from an AST expression node.  Uses node-type guards
+ * instead of regex on the printed text, so compound expressions like
+ * `"a" + "b"` are correctly classified as `kind: 'expression'`.
+ */
+function literalFromNode(node: ts.Expression, sourceFile: ts.SourceFile): Literal {
+  const text = node.getText(sourceFile)
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node))
+    return { kind: 'string', text, value: node.text }
+  if (ts.isNumericLiteral(node))
+    return { kind: 'number', text, value: Number(node.text) }
+  if (ts.isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.MinusToken && ts.isNumericLiteral(node.operand))
+    return { kind: 'number', text, value: -Number(node.operand.text) }
+  if (node.kind === ts.SyntaxKind.TrueKeyword)
+    return { kind: 'boolean', text: 'true', value: true }
+  if (node.kind === ts.SyntaxKind.FalseKeyword)
+    return { kind: 'boolean', text: 'false', value: false }
+  if (node.kind === ts.SyntaxKind.NullKeyword)
+    return { kind: 'null', text: 'null' }
+  if (ts.isIdentifier(node) && node.text === 'undefined')
+    return { kind: 'undefined', text: 'undefined' }
+  if (ts.isObjectLiteralExpression(node))
+    return { kind: 'object', text }
+  if (ts.isArrayLiteralExpression(node))
+    return { kind: 'array', text }
+  return { kind: 'expression', text }
 }
 
 /**
@@ -84,11 +93,16 @@ function typeStringFrom(typeNode: ts.TypeNode | undefined, ctx: WalkContext): Ty
   const visit = (node: ts.Node): void => {
     if (ts.isIdentifier(node)) {
       const name = node.text
-      const refId = ctx.knownNames.get(name)
-      if (refId) {
-        const start = node.getStart(ctx.sourceFile) - baseOffset
-        const end = node.getEnd() - baseOffset
-        refs.push({ start, end, symbolId: refId })
+      const moduleMap = ctx.knownNames.get(name)
+      if (moduleMap) {
+        // Prefer same-module reference, fall back to unambiguous cross-module.
+        const refId = moduleMap.get(ctx.modulePath)
+          ?? (moduleMap.size === 1 ? moduleMap.values().next().value as string : undefined)
+        if (refId) {
+          const start = node.getStart(ctx.sourceFile) - baseOffset
+          const end = node.getEnd() - baseOffset
+          refs.push({ start, end, symbolId: refId })
+        }
       }
     }
     ts.forEachChild(node, visit)
@@ -105,7 +119,7 @@ function extractParameter(param: ts.ParameterDeclaration, ctx: WalkContext, para
     optional: !!param.questionToken || !!param.initializer,
     rest: !!param.dotDotDotToken,
     defaultValue: param.initializer
-      ? literalFromText(param.initializer.getText(ctx.sourceFile))
+      ? literalFromNode(param.initializer, ctx.sourceFile)
       : null,
     doc: paramDocs[param.name.getText(ctx.sourceFile)] ?? '',
   }
@@ -461,8 +475,7 @@ function extractVariable(statement: ts.VariableStatement, decl: ts.VariableDecla
     = (statement.declarationList.flags & ts.NodeFlags.Const) === ts.NodeFlags.Const
   const doc = docOrEmpty(statement, ctx.sourceFile)
 
-  const initText = decl.initializer?.getText(ctx.sourceFile)
-  const value = initText ? literalFromText(initText) : null
+  const value = decl.initializer ? literalFromNode(decl.initializer, ctx.sourceFile) : null
 
   // If no annotation, try to ask the checker for the inferred type.
   let valueType: TypeString
@@ -515,7 +528,7 @@ function extractEnum(node: ts.EnumDeclaration, ctx: WalkContext): VSymbol {
   const doc = docOrEmpty(node, ctx.sourceFile)
   const variants: EnumVariant[] = node.members.map(m => ({
     name: m.name.getText(ctx.sourceFile),
-    value: m.initializer ? literalFromText(m.initializer.getText(ctx.sourceFile)) : null,
+    value: m.initializer ? literalFromNode(m.initializer, ctx.sourceFile) : null,
     doc: docOrEmpty(m, ctx.sourceFile),
   }))
   return {
@@ -650,7 +663,7 @@ export function collectNames(sourceFile: ts.SourceFile, root: string, moduleOver
   return names
 }
 
-export function extractFromFile(sourceFile: ts.SourceFile, checker: ts.TypeChecker, root: string, knownNames: Map<string, string>, moduleOverride?: string): VSymbol[] {
+export function extractFromFile(sourceFile: ts.SourceFile, checker: ts.TypeChecker, root: string, knownNames: Map<string, Map<string, string>>, moduleOverride?: string): VSymbol[] {
   const modulePath = moduleOverride ?? moduleOf(root, sourceFile.fileName)
   const ctx: WalkContext = {
     checker,
@@ -695,6 +708,27 @@ export function extractFromFile(sourceFile: ts.SourceFile, checker: ts.TypeCheck
         results.push(s)
     }
   }
+
+  // Detect `export { X }`, `export { X as Y }`, and `export default X`
+  // statements that don't use the inline `export` modifier.
+  const reExportedNames = new Set<string>()
+  for (const stmt of sourceFile.statements) {
+    if (ts.isExportDeclaration(stmt) && stmt.exportClause && ts.isNamedExports(stmt.exportClause)) {
+      for (const spec of stmt.exportClause.elements) {
+        reExportedNames.add((spec.propertyName ?? spec.name).text)
+      }
+    }
+    else if (ts.isExportAssignment(stmt) && ts.isIdentifier(stmt.expression)) {
+      reExportedNames.add(stmt.expression.text)
+    }
+  }
+  if (reExportedNames.size > 0) {
+    for (const sym of results) {
+      if (!sym.exported && reExportedNames.has(sym.name))
+        sym.exported = true
+    }
+  }
+
   return suppressSelfReferentialAliases(results)
 }
 
