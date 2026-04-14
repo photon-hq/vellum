@@ -69,7 +69,7 @@ TSDoc comments parsed with `@microsoft/tsdoc`. Handles:
   variables
 - Generics (type parameters + constraints + defaults)
 - Discriminated unions and `as const` objects (promoted to
-  `kind: 'enum'` — see [Shape over syntax](/philosophy#_1-shape-over-syntax))
+  `kind: 'enum'` - see [Shape over syntax](/philosophy#_1-shape-over-syntax))
 - Cross-file typeRefs via the checker
 - Package `.d.ts` extraction with re-export resolution
 
@@ -83,7 +83,7 @@ extractors: [new TypeScriptExtractor()],
 
 ## Writing a custom extractor
 
-Implement the `Extractor` interface — three fields, one async method
+Implement the `Extractor` interface - three fields, one async method
 that returns `Symbol[]`. The shape of `Symbol` is documented in
 [Symbol schema](/reference/schema); match it and your language is in.
 

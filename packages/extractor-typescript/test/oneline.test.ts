@@ -5,7 +5,7 @@ import { TypeScriptExtractor } from '../src'
 
 const FIXTURES = resolve(__dirname, '../../../test/fixtures/sample')
 
-describe('typeStringFrom — oneline', () => {
+describe('typeStringFrom - oneline', () => {
   const extractor = new TypeScriptExtractor()
   let symbols: Symbol[]
 

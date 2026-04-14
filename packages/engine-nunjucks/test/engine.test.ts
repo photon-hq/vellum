@@ -119,7 +119,7 @@ describe('nunjucksEngine', () => {
     expect(result).toBe('const u = new User()')
   })
 
-  it('strict mode (default) fails on missing symbols — no silent empty output', async () => {
+  it('strict mode (default) fails on missing symbols - no silent empty output', async () => {
     await expect(
       engine.render(
         '{% set t = symbol("ts:m#Missing") %}{{ t }}',

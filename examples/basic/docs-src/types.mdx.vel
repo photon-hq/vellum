@@ -13,7 +13,7 @@ This page is generated from `src/types.ts`.
 **Fields**
 
 {% for m in t.members -%}
-- **`{{ m.name }}`**{% if m.optional %} _(optional)_{% endif %} — {{ m.doc.summary }}
+- **`{{ m.name }}`**{% if m.optional %} _(optional)_{% endif %} - {{ m.doc.summary }}
 {% endfor %}
 {% endif %}
 

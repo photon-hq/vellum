@@ -37,7 +37,7 @@ export interface TypeString {
    * Single-line form suitable for table cells, tooltips, and inline
    * annotations where `text` (which may be pretty-printed across several
    * lines for pretty-printed unions) would break the surrounding syntax.
-   * Optional — extractors may omit when it would equal `text`.
+   * Optional - extractors may omit when it would equal `text`.
    */
   oneline?: string
   refs: TypeRef[]
@@ -118,7 +118,7 @@ export interface EnumVariant {
   value: Literal | null
   doc: DocComment
   /**
-   * Per-variant payload fields. Populated when a variant carries data —
+   * Per-variant payload fields. Populated when a variant carries data -
    * TS discriminated-union arms, Rust/Swift/Kotlin enum variants with
    * associated values, etc. Absent for flat enums and `as const` objects
    * whose entries are scalar.

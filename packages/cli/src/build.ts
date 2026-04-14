@@ -9,7 +9,7 @@ export interface BuildCommandOptions {
   cwd: string
   configPath?: string
   /**
-   * When `false`, overrides the engine's default strict mode — undefined
+   * When `false`, overrides the engine's default strict mode - undefined
    * template expressions render as empty instead of failing the build.
    * The config file's engine settings are authoritative unless this is
    * explicitly set.

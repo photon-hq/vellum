@@ -47,14 +47,14 @@ without a single template edit.
 ### `MarkdownProfile`
 
 Plain Markdown / MDX. Code fences, `` `code` ``, no components. Target
-any host that renders CommonMark — VitePress, Docusaurus, Next.js,
+any host that renders CommonMark - VitePress, Docusaurus, Next.js,
 plain static.
 
 Package: `@vellum-docs/profile-markdown`.
 
 ### `MintlifyProfile`
 
-Emits Mintlify MDX — `<Tooltip>`, `<Card>`, `<CodeGroup>`,
+Emits Mintlify MDX - `<Tooltip>`, `<Card>`, `<CodeGroup>`,
 `<ParamField>`, `<ResponseField>`, plus plain markdown. Scoped to
 Mintlify's built-in component vocabulary so templates don't need to
 know about specific Mintlify features.

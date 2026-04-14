@@ -18,7 +18,7 @@ export default function HomePage() {
         <code>page.mdx</code>
         {' '}
         files
-        at build time. Next.js file-system routing serves them directly — no
+        at build time. Next.js file-system routing serves them directly - no
         runtime lookup, no custom components.
       </p>
       <h2>Generated reference</h2>
@@ -26,21 +26,21 @@ export default function HomePage() {
         <li>
           <Link href="/docs/reference/types">Types</Link>
           {' '}
-          — interfaces and
+          - interfaces and
           type aliases from
           <code>src/types.ts</code>
         </li>
         <li>
           <Link href="/docs/reference/constants">Constants</Link>
           {' '}
-          — values
+          - values
           from
           <code>src/lib/constants.ts</code>
         </li>
         <li>
           <Link href="/docs/reference/api">API</Link>
           {' '}
-          — functions from
+          - functions from
           {' '}
           <code>src/lib/api.ts</code>
         </li>

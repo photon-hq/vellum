@@ -17,7 +17,7 @@ export class MarkdownProfile implements RendererProfile {
   readonly targetExtensions = ['.md', '.mdx'] as const
 
   typeRef(sym: Symbol, _ctx: RenderContext): string {
-    // Plain markdown has no hover — just render the name as inline code.
+    // Plain markdown has no hover - just render the name as inline code.
     return `\`${sym.name}\``
   }
 

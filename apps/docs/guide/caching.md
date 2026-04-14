@@ -1,6 +1,6 @@
 # Caching
 
-Symbol extraction is expensive — spinning up a TypeScript program
+Symbol extraction is expensive - spinning up a TypeScript program
 typechecks a non-trivial project in seconds. Vellum caches aggressively
 so only changed files re-extract on every build.
 
@@ -38,7 +38,7 @@ export default {
 
 `InMemoryCache` is useful for CI builds that don't want to preserve
 state between runs, or in tests. Write your own `Cache` implementation
-(just three methods — `get`, `set`, `clear`) if you need distributed
+(just three methods - `get`, `set`, `clear`) if you need distributed
 caching, S3-backed, etc.
 
 ## Known limitation: transitive invalidation
@@ -58,7 +58,7 @@ rm -rf node_modules/.cache/vellum
 
 Transitive invalidation via a dependency graph is a planned
 enhancement. The extractor already has access to the TypeScript
-checker's module graph, so the information is available — it just
+checker's module graph, so the information is available - it just
 needs to be surfaced to the cache layer.
 
 ## Package files: not cached (yet)
@@ -66,7 +66,7 @@ needs to be surfaced to the cache layer.
 Package `.d.ts` files extracted through
 [package extraction](/guide/package-extraction) are *not*
 per-file-cached in v1. Barrel re-exports make per-file keying
-unreliable — an entry file's content doesn't change when an internal
+unreliable - an entry file's content doesn't change when an internal
 file it re-exports from does.
 
 `.d.ts` extraction is typically fast enough that the cache miss isn't

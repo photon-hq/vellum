@@ -1,8 +1,8 @@
-# Vellum — Architecture
+# Vellum - Architecture
 
 Vellum is a templating preprocessor for documentation. It lets docs authors
-pull live data — type definitions, constants, function signatures, TSDoc
-comments — out of source code and interpolate it into Markdown, MDX, or HTML
+pull live data - type definitions, constants, function signatures, TSDoc
+comments - out of source code and interpolate it into Markdown, MDX, or HTML
 at build time.
 
 The output is plain static MDX/MD/HTML that any host (Mintlify, Docusaurus,
@@ -31,7 +31,7 @@ without reshaping the core.
 ## Non-goals
 
 - No runtime components injected into the host site.
-- No replacement for MDX/Markdown themselves — Vellum only preprocesses.
+- No replacement for MDX/Markdown themselves - Vellum only preprocesses.
 - No structured type query language (see _Design decisions_ below).
 - No cross-file import graph in v1.
 
@@ -51,14 +51,14 @@ without reshaping the core.
 
 Three layers, each swappable:
 
-1. **Extractors** — per language. Read source, emit records conforming to
+1. **Extractors** - per language. Read source, emit records conforming to
    the symbol schema below. Cacheable by file hash. Every extractor
    implements the same narrow `Extractor` interface so backends can be
    swapped without touching the symbol index or template layer (see
    _Extractors_ below).
-2. **Symbol index** — the single queryable store every template reads from.
+2. **Symbol index** - the single queryable store every template reads from.
    Keyed by stable `SymbolId`s. Language-agnostic.
-3. **Template engine + renderer profile** — walks `.mdx.vel` files, expands
+3. **Template engine + renderer profile** - walks `.mdx.vel` files, expands
    directives against the index using Nunjucks, writes plain output files
    via a renderer profile that knows the host's component vocabulary.
 
@@ -107,14 +107,14 @@ acceptable because the preprocessor is a pure function of source + config.
 
 Vellum uses [Nunjucks](https://mozilla.github.io/nunjucks/) with custom
 globals and filters. The template engine is not where this project adds
-value — the symbol extraction and indexing layer is. Rolling a template
+value - the symbol extraction and indexing layer is. Rolling a template
 engine costs months and buys nothing.
 
 Nunjucks was chosen over alternatives because:
 
 - Jinja-family syntax is widely understood.
 - First-class custom globals, filters, tags, and macros.
-- Mature `{% include %}` and `{% macro %}` — authors define their own
+- Mature `{% include %}` and `{% macro %}` - authors define their own
   reusable partials, which is effectively user-defined components without
   writing TypeScript.
 - Async rendering, which matters when extractors are slow.
@@ -214,11 +214,11 @@ profile. A profile defines:
 
 Initial profiles:
 
-- **`mintlify`** — emits MDX using only Mintlify's built-in components
+- **`mintlify`** - emits MDX using only Mintlify's built-in components
   (`<Tooltip>`, `<ParamField>`, `<ResponseField>`, `<CodeGroup>`, `<Card>`,
   `<Accordion>`, callouts) plus plain markdown tables.
-- **`html`** — emits plain HTML with no framework assumptions.
-- **`markdown`** — emits CommonMark with no component usage at all.
+- **`html`** - emits plain HTML with no framework assumptions.
+- **`markdown`** - emits CommonMark with no component usage at all.
 
 Profile-specific notes:
 
@@ -244,11 +244,11 @@ interface Symbol {
   language: 'ts' | 'js' | 'py' | 'rust' | string
 
   module: string // logical module path, relative to config root
-  source: SourceLocation // file, line, column — 1-based
+  source: SourceLocation // file, line, column - 1-based
   visibility: 'public' | 'protected' | 'private' | 'internal'
   exported: boolean
 
-  signature: string // canonical declaration — printer-normalized, JSDoc stripped,
+  signature: string // canonical declaration - printer-normalized, JSDoc stripped,
                     // bodies removed. For TS, extractor uses `ts.createPrinter`
                     // on a body-stripped synthetic clone (matches `tsc --declaration`).
   typeRefs: TypeRef[] // ranges in `signature` that link to other SymbolIds
@@ -256,7 +256,7 @@ interface Symbol {
   doc: DocComment
   tags: string[] // flat: "deprecated", "beta", "public", ...
 
-  // kind-specific — optional top-level fields, not a tagged union
+  // kind-specific - optional top-level fields, not a tagged union
   parameters?: Parameter[] // functions, methods, constructors
   signatures?: Signature[] // overloaded fns/methods; supersedes the above
   returnType?: TypeString
@@ -266,13 +266,13 @@ interface Symbol {
   members?: Member[] // interfaces, type aliases, classes, enums
   extends?: TypeString[]
   implements?: TypeString[]
-  aliasOf?: TypeString // type aliases — the RHS
+  aliasOf?: TypeString // type aliases - the RHS
 
-  valueType?: TypeString // const/var — the annotated type
-  value?: Literal | null // const/var — statically resolved literal
+  valueType?: TypeString // const/var - the annotated type
+  value?: Literal | null // const/var - statically resolved literal
   mutable?: boolean
 
-  variants?: EnumVariant[] // enums — also populated for the `as const`
+  variants?: EnumVariant[] // enums - also populated for the `as const`
                            // enum pattern and TS discriminated unions.
                            // Each variant is { name, value, doc, fields? };
                            // fields[] is populated for arms with payload
@@ -401,7 +401,7 @@ py:vellum/extract.py#Extractor.run
 ```
 
 IDs are stable across runs as long as `(language, module, qualified name,
-kind)` are stable. Renaming a symbol invalidates its ID — that is
+kind)` are stable. Renaming a symbol invalidates its ID - that is
 intentional, since stale IDs should fail loudly rather than silently point
 at the wrong thing.
 
@@ -461,7 +461,7 @@ barrel files, ensuring all public API symbols are captured even when the
 package's `index.d.ts` is just `export { X } from './internal'` chains.
 
 Symbols from packages use the package specifier as their module path in
-`SymbolId`s — e.g. `ts:zod#ZodType` — rather than the resolved file path
+`SymbolId`s - e.g. `ts:zod#ZodType` - rather than the resolved file path
 which is package-manager-specific and unstable.
 
 ### TypeScript backend (v1): raw TypeScript compiler API
@@ -512,16 +512,16 @@ any of them is a matter of implementing the `Extractor` interface.
   the public plan of record is CLI-first, with a Node-callable compiler
   API as a later milestone. Shelling out to a CLI doesn't give us
   structured symbol data. Once a library API lands, swapping is
-  low-effort — the interface is designed for it.
+  low-effort - the interface is designed for it.
 - **`oxc-parser` + a hand-built cross-file symbol index.** Extremely
-  fast Rust parser, napi bindings on npm. No type checker, ever —
+  fast Rust parser, napi bindings on npm. No type checker, ever -
   that's a stated non-goal of oxc. Viable as a hybrid if tsc-based
   extraction turns out to be too slow in CI: oxc handles the parse,
   Vellum tracks identifier-to-declaration links via a lightweight name
   graph, and falls back to the tsc backend for symbols that genuinely
   need resolved generics. Not built until real measurements show we
   need it.
-- **`swc`.** Same class as oxc — fast parser, no checker. No reason to
+- **`swc`.** Same class as oxc - fast parser, no checker. No reason to
   prefer over oxc if we go down the parser-only path.
 
 ---
@@ -538,13 +538,13 @@ type in source syntax, and records byte ranges inside that string where
 known symbols are referenced.
 
 **Why:** A structured type tree leaks TypeScript semantics into the schema
-and kills the language-agnostic goal — every extractor would have to
+and kills the language-agnostic goal - every extractor would have to
 invent its own version. String+refs round-trips cleanly through any
 language: stringify however the source language usually displays types,
 mark the spans that link elsewhere, done.
 
 **Cost:** Templates can't do deep type queries like "give me all members
-of this union." In practice doc authors rarely want that — when they do,
+of this union." In practice doc authors rarely want that - when they do,
 the `extra` field is the escape hatch.
 
 ### 2. Overloads as `signatures[]` on one symbol, not multiple symbols
@@ -563,7 +563,7 @@ has. Matches how TSDoc thinks about overloads.
 **Chosen:** One interface, kind-specific fields are optional.
 
 **Why:** Tagged unions are type-safer in TypeScript but awkward in
-templates — every field access would require a `kind` check. A flat shape
+templates - every field access would require a `kind` check. A flat shape
 means `{{ sym.members }}` just works when `sym` is an interface and is
 `undefined` otherwise; Nunjucks handles `undefined` gracefully.
 
@@ -608,13 +608,13 @@ with. Two TS-side instances today:
   with the payload properties (using the same `Member` shape as
   interface properties).
 
-Detection is strict — any ambiguity (mixed unions, named-reference
+Detection is strict - any ambiguity (mixed unions, named-reference
 arms, non-literal discriminators, nested non-literal values) falls
 through and the symbol keeps its source kind.
 
 **Why:** Vellum is a docs tool, not a type system. A reader of
 `MessageEffect` doesn't care whether the SDK used `enum`, `as const`, or
-a discriminated union — they want the same table. Collapsing by shape
+a discriminated union - they want the same table. Collapsing by shape
 lets template authors write one renderer per *kind of concept*, not one
 per source syntax.
 
@@ -631,7 +631,7 @@ TS discriminated union. Templates that care about the distinction
 disambiguate via `sym.signature`, which stays faithful to source (for
 TS, equivalent to `tsc --declaration` output). The type-vs-value
 split the schema is otherwise careful about is deliberately relaxed
-here — docs pragmatism over schema purity.
+here - docs pragmatism over schema purity.
 
 ---
 
@@ -651,7 +651,7 @@ so each can be added later without reshaping the core.
 
 ### Planned for post-v1
 
-These are explicit product goals — v1 ships without them, but the
+These are explicit product goals - v1 ships without them, but the
 extractor/index layers are being designed so that adding them later
 doesn't require rewriting anything.
 
@@ -668,7 +668,7 @@ doesn't require rewriting anything.
   the TS source declaration, and diagnostics for broken or ambiguous
   references. This is architecturally free: the LSP is just another
   consumer of the same extractor + symbol index that the build uses,
-  wrapped in an LSP transport. Watch mode is a prerequisite — the LSP
+  wrapped in an LSP transport. Watch mode is a prerequisite - the LSP
   shares the same incremental reparse machinery.
 
 ---
@@ -687,7 +687,7 @@ Implementation: `DiskCache` in `packages/core/src/cache.ts`. A hot
 in-memory layer (`Map<string, CacheEntry>`) sits in front of disk reads
 to avoid repeated I/O within a single build.
 
-The `Cache` interface is pluggable — pass a custom implementation via
+The `Cache` interface is pluggable - pass a custom implementation via
 `config.cache` to replace the default `DiskCache`. `InMemoryCache` is
 shipped as an alternative for tests or CI environments where disk
 persistence is unnecessary.
@@ -701,7 +701,7 @@ pointing to the old version of B's declarations. A full cache clear
 
 Transitive invalidation via a dependency graph is a future enhancement.
 The extractor already has access to the TypeScript checker's module
-graph, so the information is available — it just needs to be surfaced
+graph, so the information is available - it just needs to be surfaced
 to the cache layer as an additional invalidation signal.
 
 ### Package file caching

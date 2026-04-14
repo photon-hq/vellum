@@ -128,7 +128,7 @@ function parseExampleBlock(block: DocBlock): Example {
       description: null,
     }
   }
-  // No fenced code — treat the whole block as the code body.
+  // No fenced code - treat the whole block as the code body.
   return {
     title: null,
     lang: 'ts',
@@ -187,7 +187,7 @@ export function parseTSDoc(raw: string): VellumDoc {
     result.deprecated = { reason: blockMarkdown(comment.deprecatedBlock) }
   }
 
-  // @see blocks — take plain text of each.
+  // @see blocks - take plain text of each.
   for (const block of comment.seeBlocks) {
     const txt = blockMarkdown(block)
     if (txt)
@@ -208,7 +208,7 @@ export function parseTSDoc(raw: string): VellumDoc {
     }
   }
 
-  // Modifier tags: @beta, @internal, @public, etc. — record as customTags keys.
+  // Modifier tags: @beta, @internal, @public, etc. - record as customTags keys.
   for (const tag of comment.modifierTagSet.nodes) {
     const name = tag.tagName
     if (!(name in result.customTags))

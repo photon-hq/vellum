@@ -17,7 +17,7 @@ template, and write the output to the directory named in
 | ---- | ----------- |
 | `--config <path>` | Path to config file (default: auto-discover `vellum.config.{ts,mts,js,mjs}` in cwd). |
 | `--cwd <path>` | Working directory (default: `process.cwd()`). |
-| `--no-strict` | Disable strict template rendering — see below. |
+| `--no-strict` | Disable strict template rendering - see below. |
 
 ### `help`
 
@@ -30,7 +30,7 @@ undefined value (a typo like <span v-pre>`{{ fn.doc.summaryy }}`</span>, a missi
 access, a `symbol("...")` that returns null and is output directly)
 **fails the build**.
 
-This is deliberate — see [Fail loudly at build time](/philosophy#_11-fail-loudly-at-build-time).
+This is deliberate - see [Fail loudly at build time](/philosophy#_11-fail-loudly-at-build-time).
 Shipping docs with blank sections is exactly what Vellum is meant to
 prevent.
 
@@ -51,9 +51,9 @@ prevent.
 <div v-pre>
 
 ````jinja2
-{{ sym.doc.summaryy }}     {# typo — undefined — fails #}
-{{ sym.nonexistent.field }}  {# walks into undefined — fails #}
-{% set s = symbol("typoed-id") %}{{ s.name }}  {# null.name — fails #}
+{{ sym.doc.summaryy }}     {# typo - undefined - fails #}
+{{ sym.nonexistent.field }}  {# walks into undefined - fails #}
+{% set s = symbol("typoed-id") %}{{ s.name }}  {# null.name - fails #}
 ````
 
 </div>
@@ -65,13 +65,13 @@ These were precisely the bugs strict mode is designed to catch.
 Two ways to fall back to silent-empty behavior if strictly needed
 during migration:
 
-**CLI flag** — one-off or in CI:
+**CLI flag** - one-off or in CI:
 
 ```sh
 vellum build --no-strict
 ```
 
-**Config** — permanent:
+**Config** - permanent:
 
 ```ts
 // vellum.config.ts

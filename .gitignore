@@ -1,6 +1,6 @@
 node_modules/
 dist/
-# Fixture packages check in their `dist/` — that's the test input.
+# Fixture packages check in their `dist/` - that's the test input.
 !test/fixtures/**/dist/
 !test/fixtures/**/dist/**
 *.tsbuildinfo
@@ -12,7 +12,7 @@ coverage/
 .next/
 out/
 
-# Vellum output — generated from .vel sources, never checked in
+# Vellum output - generated from .vel sources, never checked in
 examples/**/docs/**/*.mdx
 examples/**/docs/**/*.md
 examples/**/docs/**/*.html

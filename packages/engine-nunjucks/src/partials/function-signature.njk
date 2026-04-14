@@ -6,12 +6,12 @@
 **Parameters**
 
 {%- for p in sym.parameters %}
-- **`{{ p.name }}`**{% if p.optional %} _(optional)_{% endif %} — `{{ p.type.text }}`{% if p.doc %} — {{ p.doc }}{% endif %}
+- **`{{ p.name }}`**{% if p.optional %} _(optional)_{% endif %} - `{{ p.type.text }}`{% if p.doc %} - {{ p.doc }}{% endif %}
 {%- endfor %}
 {%- endif %}
 
 {%- if sym.returnType and sym.returnType.text %}
 
-**Returns** — `{{ sym.returnType.text }}`{% if sym.doc.returns %} — {{ sym.doc.returns }}{% endif %}
+**Returns** - `{{ sym.returnType.text }}`{% if sym.doc.returns %} - {{ sym.doc.returns }}{% endif %}
 {%- endif %}
 {%- endif %}

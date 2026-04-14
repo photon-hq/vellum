@@ -1,6 +1,6 @@
 # Writing templates
 
-Vellum templates are [Nunjucks](https://mozilla.github.io/nunjucks/) —
+Vellum templates are [Nunjucks](https://mozilla.github.io/nunjucks/) -
 Jinja-family syntax. If you've written Jinja, Liquid, Twig, or Django
 templates, you already know it.
 
@@ -85,8 +85,8 @@ What fails under strict mode:
 <div v-pre>
 
 ````jinja2
-{{ sym.doc.summaryy }}                   {# typo — fails #}
-{{ null_symbol.name }}                   {# null dereference — fails #}
+{{ sym.doc.summaryy }}                   {# typo - fails #}
+{{ null_symbol.name }}                   {# null dereference - fails #}
 ````
 
 </div>
@@ -152,4 +152,4 @@ This page is generated from `src/types.ts`.
 </div>
 
 That single template handles any number of interfaces in `src/types.ts`
-— add a type to your source, rerun `vellum build`, it appears.
+- add a type to your source, rerun `vellum build`, it appears.

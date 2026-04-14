@@ -184,7 +184,7 @@ export function getCompletions(
       }))
     }
 
-    // After '#' — complete symbol names within the module
+    // After '#' - complete symbol names within the module
     const modulePrefix = partial.slice(0, hashIdx)
     const langSep = modulePrefix.indexOf(':')
     const modulePath = langSep === -1 ? modulePrefix : modulePrefix.slice(langSep + 1)
@@ -193,7 +193,7 @@ export function getCompletions(
     return symbols.map(s => ({
       label: s.name,
       kind: CompletionItemKind.Reference,
-      detail: `${s.kind} — ${s.doc.summary || s.signature}`,
+      detail: `${s.kind} - ${s.doc.summary || s.signature}`,
     }))
   }
 
@@ -236,7 +236,7 @@ export function getCompletions(
     }))
   }
 
-  // Context 4: Filter completions — check if cursor is after a `|`
+  // Context 4: Filter completions - check if cursor is after a `|`
   const lineStart = text.lastIndexOf('\n', offset - 1) + 1
   const lineText = text.slice(lineStart, offset)
   if (RE_FILTER_POS.test(lineText)) {
@@ -247,7 +247,7 @@ export function getCompletions(
     }))
   }
 
-  // Context 5: Property completions — check if cursor is after a `.` on a variable
+  // Context 5: Property completions - check if cursor is after a `.` on a variable
   const dotMatch = lineText.match(RE_DOT_ACCESS)
   if (dotMatch) {
     const varName = dotMatch[1]!

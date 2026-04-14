@@ -30,5 +30,5 @@ export class ExtendedService extends BaseService {
   running = false
 }
 
-/** Internal helper — not exported. */
+/** Internal helper - not exported. */
 class _InternalHelper {}

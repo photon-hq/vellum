@@ -4,7 +4,7 @@ import type { CreatePostInput, Page, Post, User } from '../types.js'
  * Fetch a user by id.
  *
  * Returns `null` if no user with that id exists. Callers should handle
- * the `null` case — a missing user is not an error condition.
+ * the `null` case - a missing user is not an error condition.
  *
  * @param id - Stable {@link User} identifier.
  * @param opts - Optional request options.

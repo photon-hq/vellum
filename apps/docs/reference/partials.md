@@ -1,13 +1,13 @@
 # Partials
 
 Partials are Nunjucks templates shipped with
-`@vellum-docs/engine-nunjucks` — reusable layout fragments you can
+`@vellum-docs/engine-nunjucks` - reusable layout fragments you can
 `{% include %}` into your own templates.
 
 ::: tip Copy-edit, don't configure
 Partials are **intentionally copy-editable starting points**, not a
 configurable theme. If `type-card.njk` doesn't fit your project,
-copy the file into your own templates directory and edit it — that's
+copy the file into your own templates directory and edit it - that's
 the customization model. See
 [Primitives over themes](/philosophy#_10-primitives-over-themes).
 :::
@@ -115,13 +115,13 @@ Render a function's signature, parameters, and return type.
 **Parameters**
 
 {%- for p in sym.parameters %}
-- **`{{ p.name }}`**{% if p.optional %} _(optional)_{% endif %} — `{{ p.type.text }}`{% if p.doc %} — {{ p.doc }}{% endif %}
+- **`{{ p.name }}`**{% if p.optional %} _(optional)_{% endif %} - `{{ p.type.text }}`{% if p.doc %} - {{ p.doc }}{% endif %}
 {%- endfor %}
 {%- endif %}
 
 {%- if sym.returnType and sym.returnType.text %}
 
-**Returns** — `{{ sym.returnType.text }}`{% if sym.doc.returns %} — {{ sym.doc.returns }}{% endif %}
+**Returns** - `{{ sym.returnType.text }}`{% if sym.doc.returns %} - {{ sym.doc.returns }}{% endif %}
 {%- endif %}
 {%- endif %}
 ````

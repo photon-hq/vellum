@@ -12,12 +12,12 @@
 **Parameters**
 
 {% for p in fn.parameters -%}
-- **`{{ p.name }}`**{% if p.optional %} _(optional)_{% endif %} — `{{ p.type.text }}`{% if p.doc %} — {{ p.doc }}{% endif %}
+- **`{{ p.name }}`**{% if p.optional %} _(optional)_{% endif %} - `{{ p.type.text }}`{% if p.doc %} - {{ p.doc }}{% endif %}
 {% endfor %}
 {% endif %}
 
 {% if fn.returnType.text %}
-**Returns** — `{{ fn.returnType.text }}`{% if fn.doc.returns %} — {{ fn.doc.returns }}{% endif %}
+**Returns** - `{{ fn.returnType.text }}`{% if fn.doc.returns %} - {{ fn.doc.returns }}{% endif %}
 {% endif %}
 
 {{ fn.doc.description }}

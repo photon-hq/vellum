@@ -1,5 +1,5 @@
 /**
- * Message effects — the `as const` enum pattern.
+ * Message effects - the `as const` enum pattern.
  */
 export const MessageEffect = {
   /** A slam effect. */
@@ -12,10 +12,10 @@ export const MessageEffect = {
 
 export type MessageEffect = (typeof MessageEffect)[keyof typeof MessageEffect]
 
-/** A regular config — no `as const`, values widen to primitives. */
+/** A regular config - no `as const`, values widen to primitives. */
 export const CONFIG = { timeout: 5000, retries: 3 }
 
-/** A mixed object — has a non-literal value, should stay a const. */
+/** A mixed object - has a non-literal value, should stay a const. */
 export const MIXED = { label: 'hi', handler: () => 1 } as const
 
 /** A numeric `as const` enum. */

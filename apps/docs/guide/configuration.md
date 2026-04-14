@@ -1,7 +1,7 @@
 # Configuration
 
 Vellum reads `vellum.config.{ts,mts,js,mjs}` from the working
-directory (or the path passed to `--config`). Loaded via `jiti` — no
+directory (or the path passed to `--config`). Loaded via `jiti` - no
 build step required.
 
 ## Minimal config
@@ -38,9 +38,9 @@ Project root. Used as the base for all relative paths. Typically
 Per-language source configuration. The key is the extractor's
 `language` identifier (`"ts"`, `"py"`, etc.).
 
-- `include` — paths (files or directories) to extract from. Directories
+- `include` - paths (files or directories) to extract from. Directories
   are walked recursively; `node_modules` is skipped.
-- `packages` — npm package specifiers to document. See
+- `packages` - npm package specifiers to document. See
   [Package extraction](/guide/package-extraction).
 
 ### `templates: string`
@@ -50,14 +50,14 @@ templates. Walked recursively.
 
 ### `outDir: string`
 
-Where rendered output is written. Mirrored directory structure — a
+Where rendered output is written. Mirrored directory structure - a
 template at `templates/reference/api.md.vel` lands at
 `outDir/reference/api.md`. You should `.gitignore` this directory.
 
 ### `extractors: Extractor[]`
 
 Language extractors to run. Each implements the `Extractor`
-interface — `language`, `extensions`, `extract()`. Multi-language
+interface - `language`, `extensions`, `extract()`. Multi-language
 projects list multiple extractors.
 
 ### `engine: TemplateEngine`
@@ -85,7 +85,7 @@ CI or test environments.
 
 ```ts
 new NunjucksEngine({
-  strict: true,                       // default — fail on undefined
+  strict: true,                       // default - fail on undefined
   searchPaths: ['docs-src/_partials'], // extra {% include %} roots
   globals: { env: process.env },       // extra template globals
   filters: { myFilter: (s) => ... },  // extra template filters

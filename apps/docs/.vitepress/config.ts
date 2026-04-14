@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'Vellum',
-  description: 'A build-time documentation preprocessor — curated docs that don\'t drift.',
+  description: 'A build-time documentation preprocessor - curated docs that don\'t drift.',
   cleanUrls: true,
 
   // PHILOSOPHY.md and ARCHITECTURE.md are included from the repo root and

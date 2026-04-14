@@ -9,20 +9,20 @@ export type Code =
   | { readonly code: 200, readonly body: string }
   | { readonly code: 404 }
 
-/** Generic union — variant fields carry type parameters. */
+/** Generic union - variant fields carry type parameters. */
 export type Result<T, E> =
   | { readonly ok: true, readonly value: T }
   | { readonly ok: false, readonly error: E }
 
-/** Named-reference arms — out of scope, should fall through to kind=type. */
+/** Named-reference arms - out of scope, should fall through to kind=type. */
 export interface Foo { kind: 'foo', n: number }
 export interface Bar { kind: 'bar', s: string }
 export type FooBar = Foo | Bar
 
-/** Mixed union — primitive arm should invalidate detection. */
+/** Mixed union - primitive arm should invalidate detection. */
 export type Mixed = string | { readonly type: 'obj' }
 
-/** No shared discriminator — no common property name. */
+/** No shared discriminator - no common property name. */
 export type NoDisc = { a: string } | { b: number }
 
 /**

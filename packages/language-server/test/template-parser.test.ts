@@ -117,9 +117,9 @@ describe('resolveVariableType', () => {
   it('respects for loop scope', () => {
     const text = '{% for item in symbols({ module: "m" }) %}inner{% endfor %}outer'
     const nodes = parseTemplate(text)
-    // Inside the loop — resolves
+    // Inside the loop - resolves
     expect(resolveVariableType(nodes, 'item', 45)).toBe('symbol')
-    // After endfor — should not resolve (out of scope)
+    // After endfor - should not resolve (out of scope)
     expect(resolveVariableType(nodes, 'item', text.length - 2)).toBeNull()
   })
 })

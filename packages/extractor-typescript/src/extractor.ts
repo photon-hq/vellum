@@ -79,7 +79,7 @@ export class TypeScriptExtractor implements Extractor {
     // Second pass: extract symbols.
     const results: VSymbol[] = []
 
-    // Project files — skip .d.ts (those are ambient, not user-authored).
+    // Project files - skip .d.ts (those are ambient, not user-authored).
     for (const file of input.files) {
       const sf = program.getSourceFile(file)
       if (!sf || sf.isDeclarationFile)
@@ -88,7 +88,7 @@ export class TypeScriptExtractor implements Extractor {
       results.push(...symbols)
     }
 
-    // Package .d.ts files — these ARE declaration files, extract them.
+    // Package .d.ts files - these ARE declaration files, extract them.
     // Use realpathSync because pnpm symlinks workspace packages and the
     // TS compiler resolves symlinks internally, so getSourceFile() with
     // the symlink path may return undefined.

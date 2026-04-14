@@ -5,7 +5,7 @@ import type { TemplateContext } from '@vellum-docs/core'
  * exposed by the runtime engine must have a section heading on the
  * doc page, and every documented entry must exist at runtime.
  *
- * Companion to the canonical-signature contract test — same idea
+ * Companion to the canonical-signature contract test - same idea
  * (compare documented claims against the code) applied to docs
  * completeness.
  */
@@ -65,7 +65,7 @@ describe('docs catalog stays in sync with engine surface', () => {
   it('every registered global has a section in reference/globals.md', () => {
     const content = readFileSync(resolve(docsDir, 'reference/globals.md'), 'utf8')
     for (const name of registeredGlobals) {
-      // Globals are headed as `## \`name(<sig>)\`` — just check the name token.
+      // Globals are headed as `## \`name(<sig>)\`` - just check the name token.
       expect(
         content.includes(`## \`${name}(`),
         `global "${name}" registered but not documented`,

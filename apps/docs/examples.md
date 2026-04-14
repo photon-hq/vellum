@@ -30,15 +30,15 @@ pnpm dev              # runs: vellum build && next dev
 
 Pages generated:
 
-- `/docs/reference/types` — all interfaces and type aliases
-- `/docs/reference/constants` — constant table with name, value, description
-- `/docs/reference/api` — function signatures with params, returns, examples
+- `/docs/reference/types` - all interfaces and type aliases
+- `/docs/reference/constants` - constant table with name, value, description
+- `/docs/reference/api` - function signatures with params, returns, examples
 
 [→ source on GitHub](https://github.com/photon-hq/vellum/tree/master/examples/nextjs)
 
 ## This site
 
-`apps/docs/` — the site you're reading now. Uses VitePress + Vellum
+`apps/docs/` - the site you're reading now. Uses VitePress + Vellum
 with dogfooded reference pages (schema, profiles, extractors) that
 extract from Vellum's own source.
 

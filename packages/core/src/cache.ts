@@ -105,7 +105,7 @@ export class DiskCache implements Cache {
       return entry
     }
     catch {
-      // Corrupted cache file — ignore.
+      // Corrupted cache file - ignore.
       return null
     }
   }
@@ -114,13 +114,13 @@ export class DiskCache implements Cache {
     const sk = this.stableKey(entry.key)
     this.hot.set(sk, entry)
 
-    // Write to disk. Fire-and-forget style errors are swallowed — a failed
+    // Write to disk. Fire-and-forget style errors are swallowed - a failed
     // cache write just means the next build re-extracts.
     try {
       writeFileSync(this.entryPath(sk), JSON.stringify(entry))
     }
     catch {
-      // Disk write failed — non-fatal.
+      // Disk write failed - non-fatal.
     }
   }
 
@@ -151,7 +151,7 @@ export class DiskCache implements Cache {
       }
     }
     catch {
-      // dir doesn't exist — nothing to invalidate
+      // dir doesn't exist - nothing to invalidate
     }
   }
 

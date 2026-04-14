@@ -91,7 +91,7 @@ describe('diskCache', () => {
     const entry = makeEntry('a.ts', 'abc123', [makeSym('A')])
     await cache1.set(entry)
 
-    // New instance — reads from disk, not hot layer
+    // New instance - reads from disk, not hot layer
     const cache2 = new DiskCache(tempRoot)
     const result = await cache2.get(entry.key)
     expect(result).not.toBeNull()

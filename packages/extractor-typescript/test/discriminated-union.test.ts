@@ -5,7 +5,7 @@ import { TypeScriptExtractor } from '../src'
 
 const FIXTURES = resolve(__dirname, '../../../test/fixtures/sample')
 
-describe('typeScriptExtractor — discriminated unions', () => {
+describe('typeScriptExtractor - discriminated unions', () => {
   const extractor = new TypeScriptExtractor()
   let symbols: Symbol[]
 
@@ -57,7 +57,7 @@ describe('typeScriptExtractor — discriminated unions', () => {
     expect(ok.fields!.map(f => f.name)).toEqual(['body'])
   })
 
-  it('supports generic unions — field types carry type parameters', () => {
+  it('supports generic unions - field types carry type parameters', () => {
     const result = symbols.find(s => s.name === 'Result')!
     expect(result.kind).toBe('enum')
     expect(result.discriminator).toBe('ok')

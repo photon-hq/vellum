@@ -80,7 +80,7 @@ describe('vellum orchestrator', () => {
     }))
 
     await vellum.extractAll()
-    // InMemoryCache was used — we can verify by checking the instance
+    // InMemoryCache was used - we can verify by checking the instance
     expect(vellum.cache).toBe(cache)
   })
 

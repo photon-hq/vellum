@@ -72,7 +72,7 @@ describe('package resolution strategies', () => {
   })
 })
 
-describe('resolveFiles — recursive directory walking', () => {
+describe('resolveFiles - recursive directory walking', () => {
   it('walks nested directories to find .ts files', async () => {
     const vellum = new Vellum(makeConfig({
       sources: { ts: { include: ['nested'] } },

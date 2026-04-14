@@ -24,7 +24,7 @@ export interface NunjucksEngineOptions {
   /**
    * Fail the build when a template outputs an undefined value (typo
    * like `{{ fn.doc.summaryy }}`, missing field access, etc.). Default
-   * `true` — we'd rather fail loudly than ship empty sections. Set to
+   * `true` - we'd rather fail loudly than ship empty sections. Set to
    * `false` to fall back to legacy "undefined → empty string" behavior.
    */
   strict?: boolean

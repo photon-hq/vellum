@@ -7,7 +7,7 @@ const FIXTURES = resolve(__dirname, '../../../test/fixtures/sample')
 
 /**
  * Run `tsc --declaration --emitDeclarationOnly` against a file and return a
- * map of { declName → canonical declaration text } — the ground truth that
+ * map of { declName → canonical declaration text } - the ground truth that
  * our extractor's `Symbol.signature` should agree with.
  */
 function tscDeclarations(filePath: string): Map<string, string> {
@@ -61,7 +61,7 @@ function declarationName(node: ts.Node): string | null {
  * between our extractor and `tsc --declaration` output:
  *   - quote style: `'x'` and `"x"` are equivalent
  *   - private member erasure: tsc emits `private name;`, we emit the full
- *     signature `private name(): T;` — collapse both to `private name`, since
+ *     signature `private name(): T;` - collapse both to `private name`, since
  *     exposing private shape in docs is intentional on our side.
  */
 function normalize(s: string): string {
@@ -89,7 +89,7 @@ describe('canonical signature contract', () => {
 
     // Structural kinds that `tsc --declaration` emits the same way we do.
     // `const` is skipped: tsc uses `declare const X: <inferred literal>` while
-    // our extractor produces `const X = <value>` — intentional schema choice.
+    // our extractor produces `const X = <value>` - intentional schema choice.
     const kinds = new Set(['interface', 'type', 'enum', 'function', 'class'])
 
     const checked: string[] = []
@@ -111,7 +111,7 @@ describe('canonical signature contract', () => {
   it('matches `tsc --declaration` for class headers and member names', async () => {
     // Class bodies have additional known divergences we don't normalize out:
     //   - property initializers (`running = false`) vs inferred types
-    //     (`running: boolean`) — we keep source, tsc resolves via checker.
+    //     (`running: boolean`) - we keep source, tsc resolves via checker.
     // So for classes we compare the HEADER (class keyword + name + heritage)
     // and the SET of top-level member names, which catches structural drift
     // without tripping on initializer/type cosmetics.

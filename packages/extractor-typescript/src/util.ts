@@ -47,7 +47,7 @@ export function getLeadingJSDoc(node: ts.Node, sourceFile: ts.SourceFile): strin
 }
 
 /**
- * Canonical declaration text for a node — JSDoc stripped, bodies removed,
+ * Canonical declaration text for a node - JSDoc stripped, bodies removed,
  * printer-normalized. Mirrors what `tsc --declaration` would emit for the
  * surface of the symbol.
  */

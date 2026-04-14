@@ -17,7 +17,7 @@
  * ```
  */
 export interface User {
-  /** Stable identifier. Opaque — do not parse. */
+  /** Stable identifier. Opaque - do not parse. */
   id: string
   /** Display name shown in the UI. */
   name: string
@@ -46,7 +46,7 @@ export interface Post {
   title: string
   /** Markdown body. */
   body: string
-  /** Author — references {@link User} by id. */
+  /** Author - references {@link User} by id. */
   authorId: string
   /** Current lifecycle state. */
   status: PostStatus

@@ -2,12 +2,12 @@
 
 Filters are how templates transform values. Vellum ships two groups:
 
-- **Profile-routed** — output depends on the active `RendererProfile`. Swap the profile, get different markup without touching the template.
-- **Plain** — no profile involvement, returns raw strings.
+- **Profile-routed** - output depends on the active `RendererProfile`. Swap the profile, get different markup without touching the template.
+- **Plain** - no profile involvement, returns raw strings.
 
 ::: tip
 Under strict rendering (the default), the `| safe` filter is
-redundant — Vellum's Nunjucks engine runs with `autoescape: false`,
+redundant - Vellum's Nunjucks engine runs with `autoescape: false`,
 so HTML entities pass through unchanged. The examples below still
 use `| safe` for familiarity with Jinja/Nunjucks authors.
 :::
@@ -45,7 +45,7 @@ export interface User {
 ```
 ````
 
-For `MintlifyProfile`, the same fenced block — Mintlify MDX understands
+For `MintlifyProfile`, the same fenced block - Mintlify MDX understands
 code fences natively.
 
 ---
@@ -71,7 +71,7 @@ link(sym: Symbol): string
 </div>
 
 Today both shipped profiles emit an inline `` `Name` `` code span. The
-filter is a seam — a future profile could render a real link to a doc
+filter is a seam - a future profile could render a real link to a doc
 route.
 
 ---
@@ -214,7 +214,7 @@ table cell.
 
 ### `summary`
 
-Return the doc summary — the first paragraph of the TSDoc comment.
+Return the doc summary - the first paragraph of the TSDoc comment.
 
 **Signature**
 
@@ -262,7 +262,7 @@ example(sym: Symbol, n?: number): string
 
 </div>
 
-Returns empty string if `n` is out of range — templates that iterate
+Returns empty string if `n` is out of range - templates that iterate
 examples explicitly should use `{% for ex in sym.doc.examples %}` to
 access `ex.lang`, `ex.title`, etc.
 

@@ -3,5 +3,5 @@
 Symbols extracted from `@microsoft/tsdoc`:
 
 {% for sym in symbols({ module: "@microsoft/tsdoc" }) %}
-- **`{{ sym.name }}`** ({{ sym.kind }}) — {{ sym.doc.summary or "_no doc_" }}
+- **`{{ sym.name }}`** ({{ sym.kind }}) - {{ sym.doc.summary or "_no doc_" }}
 {% endfor %}

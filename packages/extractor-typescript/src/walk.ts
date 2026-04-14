@@ -224,7 +224,7 @@ function extractTypeAlias(node: ts.TypeAliasDeclaration, ctx: WalkContext): VSym
   const doc = docOrEmpty(node, ctx.sourceFile)
 
   // Promote well-formed discriminated unions (e.g. `type X = {type:'a'; ...}
-  // | {type:'b'; ...}`) to `kind: 'enum'` — same rule the `as const` path
+  // | {type:'b'; ...}`) to `kind: 'enum'` - same rule the `as const` path
   // follows: `kind` describes the shape, `signature` stays faithful to the
   // source, `aliasOf` is kept for backward compatibility.
   const detected = detectDiscriminatedUnion(node, ctx)
@@ -265,7 +265,7 @@ function extractTypeAlias(node: ts.TypeAliasDeclaration, ctx: WalkContext): VSym
  *
  * Detection picks the candidate property with the most distinct literal
  * values across arms; ties break on source order. Falls through on
- * ambiguity — named-reference arms, primitives mixed with objects, or
+ * ambiguity - named-reference arms, primitives mixed with objects, or
  * non-literal discriminators all hit the null path and the symbol stays
  * `kind: 'type'`.
  */
@@ -408,7 +408,7 @@ function memberFromPropertySignature(prop: ts.PropertySignature, ctx: WalkContex
  * Both forms produce an object whose property *types* are literals
  * (string/number/boolean). From a docs consumer's perspective this is
  * interchangeable with a real `enum`, so we promote it and populate
- * `variants` — templates can render both source forms identically.
+ * `variants` - templates can render both source forms identically.
  *
  * Returns the variant list on match, or `null` when any property isn't
  * literal-typed (regular configs, functions, nested objects all fall
@@ -454,7 +454,7 @@ function literalFromType(t: ts.Type): Literal | null {
     return { kind: 'number', text: String(v), value: v }
   }
   if (t.flags & ts.TypeFlags.BooleanLiteral) {
-    // `intrinsicName` is `"true"` or `"false"` on boolean literal types —
+    // `intrinsicName` is `"true"` or `"false"` on boolean literal types -
     // not in the public ts typings.
     const v = (t as unknown as { intrinsicName?: string }).intrinsicName === 'true'
     return { kind: 'boolean', text: String(v), value: v }
@@ -493,7 +493,7 @@ function extractVariable(statement: ts.VariableStatement, decl: ts.VariableDecla
 
   // Promote the as-const-enum pattern to `kind: 'enum'`. `signature`, `value`,
   // and `valueType` stay as the source form (`declare const ...` / `{...} as
-  // const`) — `kind` drives template choice; `signature` still matches tsc.
+  // const`) - `kind` drives template choice; `signature` still matches tsc.
   const variants = isConst ? detectAsConstEnum(decl, ctx) : null
   const kind: VSymbol['kind'] = variants ? 'enum' : isConst ? 'const' : 'variable'
 
@@ -670,7 +670,7 @@ export function extractFromFile(sourceFile: ts.SourceFile, checker: ts.TypeCheck
   }
 
   // For package files (moduleOverride set), use the checker to resolve all
-  // exports — this follows re-exports through barrel files.
+  // exports - this follows re-exports through barrel files.
   if (moduleOverride) {
     return extractFromModuleExports(sourceFile, checker, ctx)
   }
@@ -710,7 +710,7 @@ export function extractFromFile(sourceFile: ts.SourceFile, checker: ts.TypeCheck
 /**
  * When `extractVariable` promotes an `as-const-enum` const to `kind: 'enum'`,
  * the common sibling `type X = (typeof X)[keyof typeof X]` becomes redundant
- * — it exists purely to re-export the object's value type as a type name.
+ * - it exists purely to re-export the object's value type as a type name.
  * Suppress it so doc authors don't see a duplicate entry for `X`.
  */
 function suppressSelfReferentialAliases(symbols: VSymbol[]): VSymbol[] {
@@ -730,7 +730,7 @@ function suppressSelfReferentialAliases(symbols: VSymbol[]): VSymbol[] {
 
 /**
  * Extract symbols by resolving a module's exports through the type checker.
- * This follows re-exports, barrel files, and `export * from` chains —
+ * This follows re-exports, barrel files, and `export * from` chains -
  * the right strategy for package .d.ts files.
  */
 function extractFromModuleExports(sourceFile: ts.SourceFile, checker: ts.TypeChecker, ctx: WalkContext): VSymbol[] {
@@ -742,7 +742,7 @@ function extractFromModuleExports(sourceFile: ts.SourceFile, checker: ts.TypeChe
   const results: VSymbol[] = []
 
   for (const sym of exports) {
-    // The public export name — may differ from the declaration name
+    // The public export name - may differ from the declaration name
     // when re-exported with an alias (e.g. `export { Foo$1 as Foo }`).
     const exportName = sym.name
 

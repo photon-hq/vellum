@@ -26,7 +26,7 @@ function makeEntry(file: string, hash: string, symbols: Symbol[]): CacheEntry {
   return { key: { language: 'ts', file, hash }, symbols }
 }
 
-describe('diskCache — invalidation and edge cases', () => {
+describe('diskCache - invalidation and edge cases', () => {
   let tempRoot: string
   let cacheDir: string
 
@@ -79,7 +79,7 @@ describe('diskCache — invalidation and edge cases', () => {
     const entry = makeEntry('a.ts', 'h1', [makeSym('A')])
     await cache.set(entry)
 
-    // Try to get with same file but different hash — different stable key, so miss
+    // Try to get with same file but different hash - different stable key, so miss
     const result = await cache.get({ language: 'ts', file: 'a.ts', hash: 'different' })
     expect(result).toBeNull()
   })

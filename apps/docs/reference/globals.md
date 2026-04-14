@@ -27,7 +27,7 @@ function symbol(id: SymbolId): Symbol | null
 
 Under strict rendering (the default), a template that passes a
 `Symbol | null` to a filter or output position will fail the build if
-the symbol isn't in the index — which is usually what you want. If a
+the symbol isn't in the index - which is usually what you want. If a
 symbol is genuinely optional, guard with `{% if t %}`.
 
 See [Symbol schema](/reference/schema) for the `Symbol` shape.
@@ -59,15 +59,15 @@ interface SymbolQuery {
 
 | Field | Type | Default | Description |
 | ----- | ---- | ------- | ----------- |
-| `module` | `string` | — | Module path. Glob patterns supported (`src/api/**`). |
-| `kind` | `SymbolKind \| SymbolKind[]` | — | `"function"`, `"interface"`, etc. See [schema](/reference/schema). |
-| `language` | `string` | — | `"ts"`, `"py"`, etc. |
-| `tag` | `string` | — | Matches `symbol.tags`. |
-| `customTag` | `string` | — | Matches keys in `symbol.doc.customTags`. |
-| `prefix` | `string` | — | Name starts with. |
+| `module` | `string` | - | Module path. Glob patterns supported (`src/api/**`). |
+| `kind` | `SymbolKind \| SymbolKind[]` | - | `"function"`, `"interface"`, etc. See [schema](/reference/schema). |
+| `language` | `string` | - | `"ts"`, `"py"`, etc. |
+| `tag` | `string` | - | Matches `symbol.tags`. |
+| `customTag` | `string` | - | Matches keys in `symbol.doc.customTags`. |
+| `prefix` | `string` | - | Name starts with. |
 | `exportedOnly` | `boolean` | `true` | Only exported symbols. Set `false` to include internals. |
 
-**Example — constants table**
+**Example - constants table**
 
 <div v-pre>
 

@@ -1,7 +1,7 @@
 # Vellum
 
 A build-time documentation preprocessor. Write templates that reference your
-source code — types, constants, functions, TSDoc comments — and Vellum
+source code: types, constants, functions, TSDoc comments. And Vellum
 compiles them into plain Markdown, MDX, or HTML that any docs host can
 consume without runtime support.
 
@@ -21,7 +21,7 @@ There are two common ways to write API docs, and both make you choose:
 narrative around it, add the right examples, leave out internal noise.
 The result is docs developers actually want to read. But they drift. A
 type gets a new field, a function signature changes, a deprecation lands
-— and unless someone updates the docs in the same PR, the reference goes
+- and unless someone updates the docs in the same PR, the reference goes
 stale. In practice, it always does.
 
 - **Auto-generated docs**: TypeDoc, Rustdoc, JSDoc. Always accurate because
@@ -85,7 +85,7 @@ Create `docs-src/types.mdx.vel`:
 {{ t | signature | safe }}
 
 {% for m in t.members -%}
-- **`{{ m.name }}`**{% if m.optional %} _(optional)_{% endif %} — {{ m.doc.summary }}
+- **`{{ m.name }}`**{% if m.optional %} _(optional)_{% endif %} - {{ m.doc.summary }}
 {% endfor %}
 ```
 
@@ -130,22 +130,22 @@ syntax). Templates have access to:
 {% set m = module("src/types.ts") %}
 ```
 
-**`symbol(id)`** — look up a single symbol by its `SymbolId`
+**`symbol(id)`** - look up a single symbol by its `SymbolId`
 (`"ts:<module>#<name>"`). Returns `null` if not found.
 
-**`symbols(query)`** — query multiple symbols. Query fields:
+**`symbols(query)`** - query multiple symbols. Query fields:
 
 | Field          | Type                   | Default | Description                        |
 | -------------- | ---------------------- | ------- | ---------------------------------- |
-| `module`       | `string`               | —       | Module path (glob supported)       |
-| `kind`         | `string \| string[]`   | —       | `"function"`, `"interface"`, etc.  |
-| `language`     | `string`               | —       | `"ts"`, `"py"`, etc.               |
-| `tag`          | `string`               | —       | Match `symbol.tags`                |
-| `customTag`    | `string`               | —       | Match `doc.customTags` keys        |
-| `prefix`       | `string`               | —       | Name starts with                   |
+| `module`       | `string`               | -       | Module path (glob supported)       |
+| `kind`         | `string \| string[]`   | -       | `"function"`, `"interface"`, etc.  |
+| `language`     | `string`               | -       | `"ts"`, `"py"`, etc.               |
+| `tag`          | `string`               | -       | Match `symbol.tags`                |
+| `customTag`    | `string`               | -       | Match `doc.customTags` keys        |
+| `prefix`       | `string`               | -       | Name starts with                   |
 | `exportedOnly` | `boolean`              | `true`  | Only exported symbols              |
 
-**`module(path)`** — return a module's exported symbols.
+**`module(path)`** - return a module's exported symbols.
 
 ### Filters
 
@@ -155,7 +155,7 @@ template emits different markup depending on the profile you configured
 between authors and host-specific output.
 
 ```njk
-{# Profile-routed — output depends on the configured renderer profile #}
+{# Profile-routed - output depends on the configured renderer profile #}
 {{ sym | signature | safe }}       {# signature wrapped in a code fence #}
 {{ sym | link | safe }}            {# name as a link #}
 {{ sym | typeRef | safe }}         {# inline name, tooltip if profile supports it #}
@@ -163,7 +163,7 @@ between authors and host-specific output.
 {{ ts  | typeString | safe }}      {# render a TypeString inline #}
 {{ val | cell | safe }}            {# markdown-table-cell-safe; TypeString or string #}
 
-{# Plain — no profile involvement, returns raw strings #}
+{# Plain - no profile involvement, returns raw strings #}
 {{ sym | declaration }}            {# canonical declaration text (alias for sym.signature) #}
 {{ sym | summary }}                {# just the doc summary text #}
 {{ sym | example(0) }}             {# nth @example code block #}
@@ -172,7 +172,7 @@ between authors and host-specific output.
 Use `declaration` (or `sym.signature`) when you need the raw declaration
 string to drop into a fenced block, JSX prop, tooltip, or table cell. Use
 `signature` when you want the profile to decide the fence/formatting. Use
-`cell` for any value you're dropping into a markdown table cell — it
+`cell` for any value you're dropping into a markdown table cell - it
 collapses whitespace, escapes column separators (`|`), wraps in a code
 span, and accepts either a `TypeString` (pulling `.oneline ?? .text`) or
 a plain string like `sym.doc.summary`:
@@ -209,7 +209,7 @@ sym.name                   "User"
 sym.kind                   "interface" | "type" | "function" | "const" | ...
 sym.module                 "src/types.ts"
 sym.exported               true
-sym.signature              canonical declaration (printer-normalized, JSDoc stripped, bodies removed — matches `tsc --declaration` for TS)
+sym.signature              canonical declaration (printer-normalized, JSDoc stripped, bodies removed - matches `tsc --declaration` for TS)
 sym.doc.summary            first paragraph of TSDoc
 sym.doc.description        body after summary
 sym.doc.params             { paramName: "description" }
@@ -220,13 +220,13 @@ sym.doc.customTags         { "@tagName": ["value"] }
 sym.members[]              interface/class fields (each has .name, .type, .doc, ...)
 sym.parameters[]           function params (each has .name, .type, .optional, .doc)
 sym.returnType             { text, refs[], oneline? }  // oneline: single-line form for cells/tooltips, present when text spans multiple lines
-sym.variants[]             enum members. Each variant is `{ name, value, doc, fields? }` — `fields[]` populated for discriminated-union arms and language-native enums with payloads. Also populated for the `as const` enum pattern — see below.
-sym.discriminator          tagged-union discriminator property name (TS) — unset for enums where the variant name itself is the tag.
+sym.variants[]             enum members. Each variant is `{ name, value, doc, fields? }` - `fields[]` populated for discriminated-union arms and language-native enums with payloads. Also populated for the `as const` enum pattern - see below.
+sym.discriminator          tagged-union discriminator property name (TS) - unset for enums where the variant name itself is the tag.
 sym.value                  const value ({ text, kind })
 sym.tags[]                 ["deprecated", "beta", ...]
 ```
 
-Full TypeScript definitions are in `@vellum-docs/core` — see
+Full TypeScript definitions are in `@vellum-docs/core` - see
 `packages/core/src/types.ts`.
 
 ### The `as const` enum pattern
@@ -247,10 +247,10 @@ From the docs consumer's perspective this is interchangeable with a real
 `enum`, so the TS extractor **promotes** it:
 
 - `sym.kind` becomes `"enum"` (not `"const"`).
-- `sym.variants[]` is populated just like for a real `enum` — one entry
+- `sym.variants[]` is populated just like for a real `enum` - one entry
   per property with `name`, `value`, and `doc`.
 - `sym.signature` stays as the source form (`const MessageEffect = {...}`
-  or `declare const MessageEffect: {...}`) — `kind` drives rendering,
+  or `declare const MessageEffect: {...}`) - `kind` drives rendering,
   `signature` stays faithful.
 - The self-referential `type MessageEffect = (typeof MessageEffect)[keyof typeof MessageEffect]`
   sibling is suppressed, so the symbol appears once.
@@ -271,8 +271,8 @@ Templates written against `sym.variants` render both real enums and
 
 ### Discriminated unions
 
-TypeScript's discriminated-union pattern — a closed union of inline
-object types sharing a literal-typed discriminator property — is the
+TypeScript's discriminated-union pattern - a closed union of inline
+object types sharing a literal-typed discriminator property - is the
 idiomatic way to model sum types with per-variant payload:
 
 ```ts
@@ -288,7 +288,7 @@ The extractor promotes these the same way it promotes `as const` enums:
 - `sym.kind` becomes `"enum"`.
 - `sym.variants[]` carries one entry per arm with `name` (the
   discriminator value as a string), `value` (the discriminator as a
-  `Literal`), `doc`, and `fields[]` — the remaining properties on that
+  `Literal`), `doc`, and `fields[]` - the remaining properties on that
   arm with the same shape as interface members (`name`, `type`,
   `readonly`, `optional`, `doc`).
 - `sym.discriminator` is set to the property name (`"type"` above).
@@ -296,9 +296,9 @@ The extractor promotes these the same way it promotes `as const` enums:
   stays populated for backward compat.
 
 Detection picks the candidate property with the most distinct literal
-values across arms (ties → first in source order). Fall-through cases —
+values across arms (ties → first in source order). Fall-through cases -
 named-reference arms (`type X = Foo | Bar`), unions mixing primitives
-with objects, arms missing the discriminator — all stay `kind: 'type'`
+with objects, arms missing the discriminator - all stay `kind: 'type'`
 with only `aliasOf` populated.
 
 ```njk
@@ -308,14 +308,14 @@ with only `aliasOf` populated.
 ### `{{ v.value.text }}`
 
 {% for f in v.fields or [] -%}
-- **`{{ f.name }}`** — `{{ f.type.text }}`{% if f.doc.summary %} — {{ f.doc.summary }}{% endif %}
+- **`{{ f.name }}`** - `{{ f.type.text }}`{% if f.doc.summary %} - {{ f.doc.summary }}{% endif %}
 {% endfor %}
 {% endfor %}
 ```
 
 The same template also renders language-native sum types (Rust
 `enum`, Swift `enum`, Kotlin `sealed class`) when those extractors
-ship — they populate `variants[].fields[]` identically.
+ship - they populate `variants[].fields[]` identically.
 
 ## SymbolId format
 
@@ -397,14 +397,14 @@ sources: {
 vellum build [--config <path>] [--cwd <path>] [--no-strict]
 ```
 
-- `--config` — path to config file (default: auto-discovers
+- `--config` - path to config file (default: auto-discovers
   `vellum.config.{ts,mts,js,mjs}` in cwd)
-- `--cwd` — working directory (default: `process.cwd()`)
-- `--no-strict` — disable strict template rendering. **Strict is the
+- `--cwd` - working directory (default: `process.cwd()`)
+- `--no-strict` - disable strict template rendering. **Strict is the
   default**: a template that outputs an undefined value (typos like
   `{{ fn.doc.summaryy }}`, missing fields, broken `symbol()` lookups)
   fails the build. Pass `--no-strict` to fall back to silent empty
-  output — useful only during migration. You can also set this
+  output - useful only during migration. You can also set this
   permanently in config via `new NunjucksEngine({ strict: false })`.
 
 ## Package extraction
@@ -432,7 +432,7 @@ module path:
 ```
 
 Libraries that ship TSDoc in their `.d.ts` files get full doc extraction.
-Libraries without TSDoc still get signatures, member lists, and type info —
+Libraries without TSDoc still get signatures, member lists, and type info -
 just with empty `doc.summary` fields.
 
 ## Caching
@@ -442,7 +442,7 @@ Vellum caches extracted symbols on disk at
 by `SHA1(language + file path + file content hash)`. On subsequent builds,
 unchanged files skip extraction entirely.
 
-The cache is automatic — no configuration needed. To clear it:
+The cache is automatic - no configuration needed. To clear it:
 
 ```sh
 rm -rf node_modules/.cache/vellum
@@ -502,9 +502,9 @@ pnpm dev              # runs: vellum build && next dev
 ```
 
 Generated pages:
-- `/docs/reference/types` — all interfaces and type aliases
-- `/docs/reference/constants` — constant table with name, value, description
-- `/docs/reference/api` — function signatures with params, returns, examples
+- `/docs/reference/types` - all interfaces and type aliases
+- `/docs/reference/constants` - constant table with name, value, description
+- `/docs/reference/api` - function signatures with params, returns, examples
 
 ## Architecture
 

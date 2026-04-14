@@ -13,11 +13,11 @@ if you just want to ship.
 
 Three stages, each swappable:
 
-1. **Extract** — per-language. Reads your source files, emits records
+1. **Extract** - per-language. Reads your source files, emits records
    conforming to the [Symbol schema](/reference/schema).
-2. **Index** — the queryable store templates read from. Keyed by stable
+2. **Index** - the queryable store templates read from. Keyed by stable
    `SymbolId`s.
-3. **Render** — walks `.vel` templates, expands <span v-pre>`{{ … }}`</span> / <span v-pre>`{% … %}`</span>
+3. **Render** - walks `.vel` templates, expands <span v-pre>`{{ … }}`</span> / <span v-pre>`{% … %}`</span>
    against the index, writes plain output through a renderer profile.
 
 ## Extractors vs profiles
@@ -31,7 +31,7 @@ The two seams:
   emits code fences and markdown tables; it does not know whether
   you're documenting TypeScript or Rust.
 
-Templates sit between the two. Filters are the seam — <span v-pre>`{{ sym | signature }}`</span>
+Templates sit between the two. Filters are the seam - <span v-pre>`{{ sym | signature }}`</span>
 routes through the active profile, so the same template emits different
 markup against different profiles.
 
@@ -52,7 +52,7 @@ ts:zod#ZodType              (from a published npm package)
 ```
 
 IDs are stable across runs as long as `(language, module, qualified
-name)` don't change. **Renaming a symbol invalidates its ID — on
+name)` don't change. **Renaming a symbol invalidates its ID - on
 purpose.** A stale id silently pointing at the wrong thing is worse
 than a loud "symbol not found" error. See
 [Fail loudly at build time](/philosophy#_11-fail-loudly-at-build-time).
@@ -83,7 +83,7 @@ docs-src/reference.html.vel  →  docs/reference.html
 ```
 
 The output extension is explicit in the filename; Vellum never has to
-guess what to emit. The `.vel` infix is project-branded — editors can
+guess what to emit. The `.vel` infix is project-branded - editors can
 register a dedicated language mode without fighting other template
 tools.
 
@@ -93,7 +93,7 @@ Vellum's output is built in CI, not checked in. Rationale:
 
 - No duplication between source and generated files.
 - No merge conflicts.
-- Generated files can't drift from source — they're regenerated on
+- Generated files can't drift from source - they're regenerated on
   every build.
 
 Every deploy depends on Vellum running. That's acceptable because

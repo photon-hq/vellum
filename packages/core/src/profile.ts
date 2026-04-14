@@ -9,7 +9,7 @@ export interface RendererProfile {
   readonly name: string
   readonly targetExtensions: readonly string[]
 
-  /** Inline reference to a type — name with a hover tooltip when supported. */
+  /** Inline reference to a type - name with a hover tooltip when supported. */
   typeRef: (sym: Symbol, ctx: RenderContext) => string
 
   /** A signature rendered as a code fence, with typeRefs linkified if possible. */

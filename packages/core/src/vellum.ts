@@ -15,7 +15,7 @@ import { InMemorySymbolIndex } from './symbol-index'
 const RE_JS_EXT = /\.(js|mjs|cjs)$/
 
 export interface VellumConfig {
-  /** Project root — all other paths are resolved against this. */
+  /** Project root - all other paths are resolved against this. */
   root: string
 
   /** Source roots to extract symbols from, per language. Paths relative to root. */
@@ -198,11 +198,11 @@ export class Vellum {
           results.push({ file: resolved, packageName: pkg })
         }
         else {
-          console.warn(`vellum: could not resolve types for package "${pkg}" — skipping`)
+          console.warn(`vellum: could not resolve types for package "${pkg}" - skipping`)
         }
       }
       catch (err) {
-        console.warn(`vellum: failed to resolve package "${pkg}" — ${err instanceof Error ? err.message : err}`)
+        console.warn(`vellum: failed to resolve package "${pkg}" - ${err instanceof Error ? err.message : err}`)
       }
     }
     return results
@@ -224,7 +224,7 @@ export class Vellum {
     if (typesFromDisk)
       return typesFromDisk
 
-    // Strategy 2: require.resolve("pkg/package.json") — works for packages
+    // Strategy 2: require.resolve("pkg/package.json") - works for packages
     // that do expose package.json in their exports map.
     try {
       const pkgJsonPath = req.resolve(`${pkg}/package.json`)
@@ -236,10 +236,10 @@ export class Vellum {
       }
     }
     catch {
-      // package.json not resolvable via require — already tried disk
+      // package.json not resolvable via require - already tried disk
     }
 
-    // Strategy 3: require.resolve the package directly — works when main
+    // Strategy 3: require.resolve the package directly - works when main
     // points to a .d.ts or has a co-located .d.ts.
     try {
       const resolved = req.resolve(pkg)
@@ -254,7 +254,7 @@ export class Vellum {
       // not resolvable
     }
 
-    // Strategy 4: @types/pkg fallback — try disk first, then require.resolve.
+    // Strategy 4: @types/pkg fallback - try disk first, then require.resolve.
     const atTypes = `@types/${pkg.startsWith('@') ? pkg.slice(1).replace('/', '__') : pkg}`
     const atTypesDisk = this.readTypesFromDisk(root, atTypes)
     if (atTypesDisk)
@@ -311,7 +311,7 @@ export class Vellum {
       }
     }
     catch {
-      // unreadable — skip
+      // unreadable - skip
     }
     return null
   }
@@ -369,7 +369,7 @@ export class Vellum {
         await visit(root)
     }
     catch {
-      // missing directory — empty result
+      // missing directory - empty result
     }
     return results.sort()
   }

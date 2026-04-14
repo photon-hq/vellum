@@ -1,7 +1,7 @@
 # Symbol schema
 
 The contract every extractor produces and every template reads from.
-The schema is deliberately flat and language-agnostic — strings and
+The schema is deliberately flat and language-agnostic - strings and
 optional fields, not recursive type trees. See
 [Language-agnostic by restraint](/philosophy#_2-language-agnostic-by-restraint)
 for the reasoning.

@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Vellum
   text: Curated docs that don't drift.
-  tagline: Write narrative docs that pull live data from source. Ship plain MDX, Markdown, or HTML — no runtime, no theme, no surprises.
+  tagline: "Write templates that reference your source code: types, constants, functions, TSDoc comments. \n\nAnd Vellum compiles them into plain Markdown, MDX, or HTML that any docs host can consume without runtime support."
   actions:
     - theme: brand
       text: Get started

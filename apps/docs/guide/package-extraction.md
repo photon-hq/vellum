@@ -20,7 +20,7 @@ ts:zod#ZodType
 ts:@tanstack/react-query#QueryClient
 ```
 
-Not the resolved `.d.ts` file path — that path is package-manager
+Not the resolved `.d.ts` file path - that path is package-manager
 specific and moves between installs.
 
 ## Resolution strategies
@@ -30,7 +30,7 @@ For each declared package, Vellum walks four strategies in order:
 | # | Strategy |
 | - | -------- |
 | 1 | Read the package's `types` / `typings` field from `package.json`, even when `exports` blocks deep access. |
-| 2 | `require.resolve("pkg/package.json")` — read `types`/`typings`. |
+| 2 | `require.resolve("pkg/package.json")` - read `types`/`typings`. |
 | 3 | `require.resolve("pkg")` → look for co-located `.d.ts`. |
 | 4 | Fall back to `@types/pkg` (DefinitelyTyped). |
 
@@ -73,12 +73,12 @@ Same template API as for local source. Template:
 
 Libraries that ship TSDoc in their `.d.ts` files get full doc
 extraction. Libraries without TSDoc still get signatures, member
-lists, and type info — just with empty `doc.summary` fields.
+lists, and type info - just with empty `doc.summary` fields.
 
 ## Caching notes
 
 Package `.d.ts` files are **not** per-file-cached in v1. Barrel
-re-exports make per-file keying unreliable — the entry file's content
+re-exports make per-file keying unreliable - the entry file's content
 doesn't change when an internal file it re-exports from does.
 Acceptable for most packages since `.d.ts` extraction is fast; could
 become a bottleneck for very large packages.

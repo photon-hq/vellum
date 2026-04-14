@@ -110,7 +110,7 @@ export interface User {
 
 Rendered as plain Markdown: `# Types`, `## User`, a fenced `ts`
 block with the interface signature, and a members table. Your host
-— Docusaurus, Next.js, VitePress, plain static — serves that file
+- Docusaurus, Next.js, VitePress, plain static - serves that file
 directly.
 
 Your host (Docusaurus, Next.js, VitePress, plain static) serves that
@@ -118,7 +118,7 @@ file directly.
 
 ## Next steps
 
-- Learn the [mental model](/guide/concepts) — extractors, profiles, the pipeline.
+- Learn the [mental model](/guide/concepts) - extractors, profiles, the pipeline.
 - See [Writing templates](/guide/templates) for the full template API.
 - Document npm packages with [package extraction](/guide/package-extraction).
 - Read about [why Vellum is shaped this way](/philosophy).

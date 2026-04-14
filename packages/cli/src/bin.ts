@@ -17,7 +17,7 @@ function hasFlag(name: string): boolean {
 }
 
 function printHelp(): void {
-  console.log(`vellum — documentation preprocessor
+  console.log(`vellum - documentation preprocessor
 
 Usage:
   vellum build [--config <path>] [--cwd <path>] [--no-strict]
@@ -33,7 +33,7 @@ Flags:
   --no-strict       Disable strict template rendering. By default, a template
                     that references an undefined field (typos, missing symbols)
                     fails the build. Pass --no-strict to fall back to silent
-                    empty output — useful only during migration.
+                    empty output - useful only during migration.
 `)
 }
 

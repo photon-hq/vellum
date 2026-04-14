@@ -6,7 +6,7 @@ import { TypeScriptExtractor } from '../src'
 const FIXTURES = resolve(__dirname, '../../../test/fixtures')
 const FAKEPKG = resolve(FIXTURES, 'fakepkg/index.d.ts')
 
-describe('typeScriptExtractor — package extraction', () => {
+describe('typeScriptExtractor - package extraction', () => {
   const extractor = new TypeScriptExtractor()
   let symbols: Symbol[]
 
@@ -47,7 +47,7 @@ describe('typeScriptExtractor — package extraction', () => {
   })
 
   it('extracts both project files and package files in one pass', async () => {
-    // Separate extraction — this variant includes project files that the
+    // Separate extraction - this variant includes project files that the
     // shared `symbols` snapshot does not.
     const combined = await extractor.extract({
       files: [resolve(FIXTURES, 'sample/types.ts')],
