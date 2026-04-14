@@ -1,5 +1,8 @@
 node_modules/
 dist/
+# Fixture packages check in their `dist/` — that's the test input.
+!test/fixtures/**/dist/
+!test/fixtures/**/dist/**
 *.tsbuildinfo
 .DS_Store
 .turbo/
