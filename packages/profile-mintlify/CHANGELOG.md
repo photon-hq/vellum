@@ -1,5 +1,11 @@
 # @vellum-docs/profile-mintlify
 
+## 0.2.3
+
+### Patch Changes
+
+- @vellum-docs/core@0.2.3
+
 ## 0.2.2
 
 ### Patch Changes
