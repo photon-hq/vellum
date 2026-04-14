@@ -110,6 +110,13 @@ export interface EnumVariant {
   name: string
   value: Literal | null
   doc: DocComment
+  /**
+   * Per-variant payload fields. Populated when a variant carries data —
+   * TS discriminated-union arms, Rust/Swift/Kotlin enum variants with
+   * associated values, etc. Absent for flat enums and `as const` objects
+   * whose entries are scalar.
+   */
+  fields?: Member[]
 }
 
 export interface Symbol {
@@ -146,6 +153,13 @@ export interface Symbol {
   mutable?: boolean
 
   variants?: EnumVariant[]
+  /**
+   * For tagged-union shapes whose variants are identified by a shared
+   * property name (e.g. TS `{ type: 'a' } | { type: 'b' }`, discriminator
+   * = `'type'`). Unset for languages where the variant name is itself
+   * the discriminator (Rust/Swift/Kotlin enum).
+   */
+  discriminator?: string
 
   extra?: Record<string, unknown>
 }

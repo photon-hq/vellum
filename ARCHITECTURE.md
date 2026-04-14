@@ -272,8 +272,16 @@ interface Symbol {
   value?: Literal | null // const/var — statically resolved literal
   mutable?: boolean
 
-  variants?: EnumVariant[] // enums — also populated for `as const` enum
-                           // pattern, see "as-const-enum promotion" below
+  variants?: EnumVariant[] // enums — also populated for the `as const`
+                           // enum pattern and TS discriminated unions.
+                           // Each variant is { name, value, doc, fields? };
+                           // fields[] is populated for arms with payload
+                           // (TS union arms, Rust/Swift enum variants
+                           // with associated values).
+  discriminator?: string   // tagged-union discriminator property name
+                           // (TS). Unset for sum types where the variant
+                           // name is itself the tag (Rust enum, Swift
+                           // enum, etc.).
 
   extra?: Record<string, unknown> // language-specific escape hatch
 }
@@ -580,27 +588,47 @@ the host's build.
 preprocessor is a pure function of source + config, and failures fail
 loudly at build time.
 
-### 6. `as const` enum promotion — `kind` tracks docs intent, not source syntax
+### 6. `kind` describes shape, not source syntax
 
-**Chosen:** The TS extractor inspects `const` values. When every property
-is literal-typed (string/number/boolean) — the `as const` enum pattern,
-or the `declare const X: { readonly ... }` d.ts equivalent — it promotes
-`kind` to `'enum'` and populates `variants[]`. The self-referential
-`type X = (typeof X)[keyof typeof X]` sibling is suppressed.
+**Chosen:** Extractors promote `kind` based on the *shape* a symbol
+presents to a reader, not the exact source keyword it was declared
+with. Two TS-side instances today:
 
-**Why:** Vellum is a docs tool, not a type system. A reader looking at
-`MessageEffect` doesn't care whether the SDK used `enum` or `as const`;
-they want the same table. Promoting on shape lets template authors write
-one renderer for both source forms. `as const` objects are widely
-recommended over `enum` (TS handbook, `prefer-literal-enum-member`), so
-an SDK shouldn't document worse just because it picked the modern form.
+- **`as const` enum promotion.** `const X = { a: 'foo' } as const` (or
+  its d.ts form `declare const X: { readonly a: 'foo' }`) becomes
+  `kind: 'enum'` with `variants[]` populated. The self-referential
+  `type X = (typeof X)[keyof typeof X]` sibling is suppressed so `X`
+  appears once.
+- **Discriminated-union promotion.** `type X = { type: 'a'; ... } |
+  { type: 'b'; ... }` becomes `kind: 'enum'` with `variants[]` and
+  `discriminator` populated. Each variant carries a `fields[]` array
+  with the payload properties (using the same `Member` shape as
+  interface properties).
 
-**Cost:** `sym.kind` no longer matches the source keyword exactly —
-`kind === 'enum'` can mean either `enum` or `as const` object. Templates
-that care can still disambiguate via `sym.signature`, which stays as the
-source form. The type-vs-value distinction the schema is otherwise
-careful about is deliberately relaxed here — docs pragmatism wins over
-schema purity.
+Detection is strict — any ambiguity (mixed unions, named-reference
+arms, non-literal discriminators, nested non-literal values) falls
+through and the symbol keeps its source kind.
+
+**Why:** Vellum is a docs tool, not a type system. A reader of
+`MessageEffect` doesn't care whether the SDK used `enum`, `as const`, or
+a discriminated union — they want the same table. Collapsing by shape
+lets template authors write one renderer per *kind of concept*, not one
+per source syntax.
+
+The rule also makes the schema **cross-language**. A Rust
+`enum Shape { Circle { r: f64 }, Rect { w, h } }`, a Swift `enum` with
+associated values, and a Kotlin `sealed class` hierarchy are all the
+same shape as a TS discriminated union. Whichever extractor ships
+later populates the same enriched `EnumVariant` (tag + fields)
+without schema additions.
+
+**Cost:** `sym.kind` no longer matches the source keyword exactly.
+`kind === 'enum'` can mean a real `enum`, an `as const` object, or a
+TS discriminated union. Templates that care about the distinction
+disambiguate via `sym.signature`, which stays faithful to source (for
+TS, equivalent to `tsc --declaration` output). The type-vs-value
+split the schema is otherwise careful about is deliberately relaxed
+here — docs pragmatism over schema purity.
 
 ---
 

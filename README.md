@@ -208,7 +208,8 @@ sym.doc.customTags         { "@tagName": ["value"] }
 sym.members[]              interface/class fields (each has .name, .type, .doc, ...)
 sym.parameters[]           function params (each has .name, .type, .optional, .doc)
 sym.returnType             { text, refs[] }
-sym.variants[]             enum members (also populated for the `as const` enum pattern — see below)
+sym.variants[]             enum members. Each variant is `{ name, value, doc, fields? }` — `fields[]` populated for discriminated-union arms and language-native enums with payloads. Also populated for the `as const` enum pattern — see below.
+sym.discriminator          tagged-union discriminator property name (TS) — unset for enums where the variant name itself is the tag.
 sym.value                  const value ({ text, kind })
 sym.tags[]                 ["deprecated", "beta", ...]
 ```
@@ -255,6 +256,54 @@ Templates written against `sym.variants` render both real enums and
 | `{{ sym.name }}.{{ v.name }}` | `{{ v.value.text }}` | {{ v.doc.summary }} |
 {% endfor %}
 ```
+
+### Discriminated unions
+
+TypeScript's discriminated-union pattern — a closed union of inline
+object types sharing a literal-typed discriminator property — is the
+idiomatic way to model sum types with per-variant payload:
+
+```ts
+/** A change in a group chat. */
+export type GroupChange =
+  | { readonly type: 'renamed', readonly name: string }
+  | { readonly type: 'participantAdded', readonly address: string }
+  | { readonly type: 'iconRemoved' }
+```
+
+The extractor promotes these the same way it promotes `as const` enums:
+
+- `sym.kind` becomes `"enum"`.
+- `sym.variants[]` carries one entry per arm with `name` (the
+  discriminator value as a string), `value` (the discriminator as a
+  `Literal`), `doc`, and `fields[]` — the remaining properties on that
+  arm with the same shape as interface members (`name`, `type`,
+  `readonly`, `optional`, `doc`).
+- `sym.discriminator` is set to the property name (`"type"` above).
+- `sym.signature` stays as the canonical source form; `sym.aliasOf`
+  stays populated for backward compat.
+
+Detection picks the candidate property with the most distinct literal
+values across arms (ties → first in source order). Fall-through cases —
+named-reference arms (`type X = Foo | Bar`), unions mixing primitives
+with objects, arms missing the discriminator — all stay `kind: 'type'`
+with only `aliasOf` populated.
+
+```njk
+## {{ sym.name }} <kbd>{{ sym.discriminator }}</kbd>
+
+{% for v in sym.variants %}
+### `{{ v.value.text }}`
+
+{% for f in v.fields or [] -%}
+- **`{{ f.name }}`** — `{{ f.type.text }}`{% if f.doc.summary %} — {{ f.doc.summary }}{% endif %}
+{% endfor %}
+{% endfor %}
+```
+
+The same template also renders language-native sum types (Rust
+`enum`, Swift `enum`, Kotlin `sealed class`) when those extractors
+ship — they populate `variants[].fields[]` identically.
 
 ## SymbolId format
 

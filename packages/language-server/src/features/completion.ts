@@ -64,6 +64,7 @@ const SYMBOL_PROPERTIES: { name: string, detail: string }[] = [
   { name: 'extends', detail: 'TypeString[]' },
   { name: 'implements', detail: 'TypeString[]' },
   { name: 'mutable', detail: 'boolean' },
+  { name: 'discriminator', detail: 'string (tagged-union discriminator property name)' },
 ]
 
 const DOC_PROPERTIES: { name: string, detail: string }[] = [

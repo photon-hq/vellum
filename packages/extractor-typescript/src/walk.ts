@@ -213,10 +213,17 @@ function extractInterface(node: ts.InterfaceDeclaration, ctx: WalkContext): VSym
 function extractTypeAlias(node: ts.TypeAliasDeclaration, ctx: WalkContext): VSymbol {
   const name = node.name.text
   const doc = docOrEmpty(node, ctx.sourceFile)
+
+  // Promote well-formed discriminated unions (e.g. `type X = {type:'a'; ...}
+  // | {type:'b'; ...}`) to `kind: 'enum'` — same rule the `as const` path
+  // follows: `kind` describes the shape, `signature` stays faithful to the
+  // source, `aliasOf` is kept for backward compatibility.
+  const detected = detectDiscriminatedUnion(node, ctx)
+
   return {
     id: makeId(ctx.modulePath, name),
     name,
-    kind: 'type',
+    kind: detected ? 'enum' : 'type',
     language: 'ts',
     module: ctx.modulePath,
     source: locationOf(node, ctx.sourceFile, ctx.root),
@@ -232,6 +239,154 @@ function extractTypeAlias(node: ts.TypeAliasDeclaration, ctx: WalkContext): VSym
       constraint: tp.constraint ? typeStringFrom(tp.constraint, ctx) : null,
       default: tp.default ? typeStringFrom(tp.default, ctx) : null,
     })),
+    ...(detected ? { variants: detected.variants, discriminator: detected.discriminator } : {}),
+  }
+}
+
+/**
+ * Detect a well-formed discriminated union:
+ *
+ *   type X =
+ *     | { type: 'a'; ...fields }
+ *     | { type: 'b'; ...fields }
+ *
+ * Returns the promoted variants and the discriminator key name, or null
+ * when the alias isn't a union, any arm isn't an inline object type, or
+ * no shared property is literal-typed on every arm.
+ *
+ * Detection picks the candidate property with the most distinct literal
+ * values across arms; ties break on source order. Falls through on
+ * ambiguity — named-reference arms, primitives mixed with objects, or
+ * non-literal discriminators all hit the null path and the symbol stays
+ * `kind: 'type'`.
+ */
+function detectDiscriminatedUnion(
+  node: ts.TypeAliasDeclaration,
+  ctx: WalkContext,
+): { variants: EnumVariant[], discriminator: string } | null {
+  if (!ts.isUnionTypeNode(node.type))
+    return null
+  const arms: ts.TypeLiteralNode[] = []
+  for (const t of node.type.types) {
+    if (!ts.isTypeLiteralNode(t))
+      return null
+    arms.push(t)
+  }
+  if (arms.length < 2)
+    return null
+
+  // Candidate discriminator: a property name present on every arm with a
+  // literal type (string/number/boolean) on every arm.
+  interface Candidate { key: string, literals: Literal[] }
+  const candidates: Candidate[] = []
+  const firstArmProps = arms[0]!.members.filter(ts.isPropertySignature)
+
+  for (const prop of firstArmProps) {
+    if (!prop.name || !ts.isIdentifier(prop.name))
+      continue
+    const key = prop.name.text
+    const literals = collectDiscriminatorLiterals(key, arms)
+    if (literals)
+      candidates.push({ key, literals })
+  }
+
+  if (candidates.length === 0)
+    return null
+
+  // Pick the property with the most distinct literal values across arms.
+  let best = candidates[0]!
+  let bestDistinct = new Set(best.literals.map(l => l.text)).size
+  for (const c of candidates.slice(1)) {
+    const distinct = new Set(c.literals.map(l => l.text)).size
+    if (distinct > bestDistinct) {
+      best = c
+      bestDistinct = distinct
+    }
+  }
+
+  const variants: EnumVariant[] = arms.map((arm, i) => {
+    const tag = best.literals[i]!
+    const fields: Member[] = []
+    for (const m of arm.members) {
+      if (!ts.isPropertySignature(m) || !m.name || !ts.isIdentifier(m.name))
+        continue
+      if (m.name.text === best.key)
+        continue
+      fields.push(memberFromPropertySignature(m, ctx))
+    }
+    return {
+      name: String(tag.value ?? tag.text),
+      value: tag,
+      doc: docOrEmpty(arm, ctx.sourceFile),
+      ...(fields.length > 0 ? { fields } : {}),
+    }
+  })
+
+  return { variants, discriminator: best.key }
+}
+
+/**
+ * Walk every arm looking for a property named `key` with a literal type.
+ * Returns the per-arm literals in arm order, or null if any arm is
+ * missing the property or carries a non-literal type for it.
+ */
+function collectDiscriminatorLiterals(
+  key: string,
+  arms: ts.TypeLiteralNode[],
+): Literal[] | null {
+  const literals: Literal[] = []
+  for (const arm of arms) {
+    const match = arm.members.find(
+      (m): m is ts.PropertySignature =>
+        ts.isPropertySignature(m)
+        && !!m.name
+        && ts.isIdentifier(m.name)
+        && m.name.text === key,
+    )
+    if (!match)
+      return null
+    const lit = literalFromPropertySignature(match)
+    if (!lit)
+      return null
+    literals.push(lit)
+  }
+  return literals
+}
+
+function literalFromPropertySignature(prop: ts.PropertySignature): Literal | null {
+  if (!prop.type || !ts.isLiteralTypeNode(prop.type))
+    return null
+  const lit = prop.type.literal
+  if (ts.isStringLiteral(lit))
+    return { kind: 'string', text: JSON.stringify(lit.text), value: lit.text }
+  if (ts.isNumericLiteral(lit)) {
+    const n = Number(lit.text)
+    return { kind: 'number', text: lit.text, value: n }
+  }
+  if (lit.kind === ts.SyntaxKind.TrueKeyword)
+    return { kind: 'boolean', text: 'true', value: true }
+  if (lit.kind === ts.SyntaxKind.FalseKeyword)
+    return { kind: 'boolean', text: 'false', value: false }
+  return null
+}
+
+function memberFromPropertySignature(prop: ts.PropertySignature, ctx: WalkContext): Member {
+  const name = prop.name && ts.isIdentifier(prop.name)
+    ? prop.name.text
+    : prop.name?.getText(ctx.sourceFile) ?? ''
+  const readonly = !!ts.getModifiers(prop)?.some(
+    m => m.kind === ts.SyntaxKind.ReadonlyKeyword,
+  )
+  return {
+    name,
+    kind: 'property',
+    signature: prop.getText(ctx.sourceFile).replace(RE_TRAILING_SEMI, ''),
+    type: typeStringFrom(prop.type, ctx),
+    optional: !!prop.questionToken,
+    readonly,
+    visibility: 'public',
+    static: false,
+    doc: docOrEmpty(prop, ctx.sourceFile),
   }
 }
 
