@@ -20,6 +20,14 @@ export interface NunjucksEngineOptions {
 
   /** Override the source extension (default `.vel`). */
   sourceExtension?: string
+
+  /**
+   * Fail the build when a template outputs an undefined value (typo
+   * like `{{ fn.doc.summaryy }}`, missing field access, etc.). Default
+   * `true` — we'd rather fail loudly than ship empty sections. Set to
+   * `false` to fall back to legacy "undefined → empty string" behavior.
+   */
+  strict?: boolean
 }
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -28,6 +36,9 @@ const builtinPartialsDir = resolve(here, './partials')
 export class NunjucksEngine implements TemplateEngine {
   readonly name = 'nunjucks'
   readonly sourceExtension: string
+
+  /** Mutable so the CLI's `--no-strict` flag can flip it after config load. */
+  strict: boolean
 
   private readonly searchPaths: string[]
   private readonly extraGlobals: Record<string, unknown>
@@ -38,6 +49,7 @@ export class NunjucksEngine implements TemplateEngine {
     this.searchPaths = [builtinPartialsDir, ...(opts.searchPaths ?? [])]
     this.extraGlobals = opts.globals ?? {}
     this.extraFilters = opts.filters ?? {}
+    this.strict = opts.strict ?? true
   }
 
   async render(source: string, ctx: TemplateContext): Promise<string> {
@@ -46,7 +58,7 @@ export class NunjucksEngine implements TemplateEngine {
         noCache: true,
         watch: false,
       }),
-      { autoescape: false, throwOnUndefined: false, trimBlocks: false, lstripBlocks: false },
+      { autoescape: false, throwOnUndefined: this.strict, trimBlocks: false, lstripBlocks: false },
     )
 
     // Path alias: `{% include "@vellum-docs/partials/..." %}` → built-in partials dir.

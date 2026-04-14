@@ -162,7 +162,7 @@ Shipped filters:
 {{ sym | signature }}       signature as a code fence, typeRefs linkified (profile-routed)
 {{ sym | declaration }}     raw canonical declaration text (alias for sym.signature)
 {{ val | cell }}            markdown-table-cell-safe rendering (profile-routed)
-{{ str | tsdoc }}           markdown-safe tsdoc rendering
+{{ sym | summary }}         doc summary text
 {{ sym | example(0) }}      nth @example block
 ```
 
@@ -251,7 +251,6 @@ interface Symbol {
   signature: string // canonical declaration — printer-normalized, JSDoc stripped,
                     // bodies removed. For TS, extractor uses `ts.createPrinter`
                     // on a body-stripped synthetic clone (matches `tsc --declaration`).
-  signatureResolved?: string // generics/aliases expanded, when different
   typeRefs: TypeRef[] // ranges in `signature` that link to other SymbolIds
 
   doc: DocComment
@@ -346,7 +345,7 @@ interface TypeParameter {
 
 interface Member {
   name: string
-  kind: 'property' | 'method' | 'constructor' | 'index' | 'call'
+  kind: 'property' | 'method' | 'constructor'
   signature: string
   type: TypeString
   optional: boolean
@@ -473,11 +472,11 @@ with a **custom `CompilerHost`**. TSDoc comments are parsed with
 
 **Why this choice:**
 
-1. **Full type checker.** Only a real checker can populate the
-   `signatureResolved` field (generics expanded, aliases followed) and
-   resolve cross-file `typeRefs` reliably. Parser-only backends (oxc,
-   swc, tree-sitter) can't do either without us reimplementing the
-   checker on top.
+1. **Full type checker.** Only a real checker can resolve cross-file
+   `typeRefs` reliably, walk barrel-file re-exports through `getExportsOfModule`,
+   and reason about generics for promoted `as const` / discriminated-union
+   patterns. Parser-only backends (oxc, swc, tree-sitter) can't do any of
+   this without us reimplementing the checker on top.
 2. **Resilient to broken checkouts.** A custom `CompilerHost` lets us
    synthesize an in-memory program from whatever files Vellum is pointed
    at, without requiring a valid `tsconfig.json` or a fully typechecking

@@ -103,7 +103,7 @@ export interface Signature {
 
 export interface Member {
   name: string
-  kind: 'property' | 'method' | 'constructor' | 'index' | 'call'
+  kind: 'property' | 'method' | 'constructor'
   signature: string
   type: TypeString
   optional: boolean
@@ -138,7 +138,6 @@ export interface Symbol {
   exported: boolean
 
   signature: string
-  signatureResolved?: string
   typeRefs: TypeRef[]
 
   doc: DocComment

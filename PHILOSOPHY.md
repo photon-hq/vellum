@@ -76,6 +76,18 @@ The schema is deliberately lossy. `extra: Record<string, unknown>`
 exists as the escape hatch when a language needs to surface something
 the core shape can't express.
 
+**On "language-agnostic" vs. "pattern-aware."** The bar isn't "no
+field can be more common in one language than another." It's "every
+field serves a cross-language *pattern*, not a single-language
+idiosyncrasy." `Symbol.discriminator?` is an example: it names the
+discriminator property of a tagged-union arm, a concept TS makes
+explicit and Rust/Swift/Kotlin fold into the variant name itself. The
+field is *used* by TS and unused by native sum-type languages, but the
+pattern it describes — "what tells variants apart" — is universal.
+That's fine. What's *not* fine is a field that only means something
+under one language's semantics (e.g., `isAsync`, `isGenerator`,
+`isRefCounted`) — those belong in `extra`.
+
 ### 3. Pull, don't push
 
 Authors write the document; Vellum supplies primitives.

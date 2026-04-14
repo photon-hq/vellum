@@ -394,12 +394,18 @@ sources: {
 ## CLI
 
 ```
-vellum build [--config <path>] [--cwd <path>]
+vellum build [--config <path>] [--cwd <path>] [--no-strict]
 ```
 
 - `--config` — path to config file (default: auto-discovers
   `vellum.config.{ts,mts,js,mjs}` in cwd)
 - `--cwd` — working directory (default: `process.cwd()`)
+- `--no-strict` — disable strict template rendering. **Strict is the
+  default**: a template that outputs an undefined value (typos like
+  `{{ fn.doc.summaryy }}`, missing fields, broken `symbol()` lookups)
+  fails the build. Pass `--no-strict` to fall back to silent empty
+  output — useful only during migration. You can also set this
+  permanently in config via `new NunjucksEngine({ strict: false })`.
 
 ## Package extraction
 

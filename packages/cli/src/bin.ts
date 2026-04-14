@@ -12,16 +12,28 @@ function parseFlag(name: string): string | undefined {
   return args[i + 1]
 }
 
+function hasFlag(name: string): boolean {
+  return args.includes(name)
+}
+
 function printHelp(): void {
   console.log(`vellum — documentation preprocessor
 
 Usage:
-  vellum build [--config <path>] [--cwd <path>]
+  vellum build [--config <path>] [--cwd <path>] [--no-strict]
   vellum help
 
 Commands:
   build    Extract symbols and render .vel templates to the output directory.
   help     Show this help.
+
+Flags:
+  --config <path>   Config file path (default: auto-discover vellum.config.{ts,mts,js,mjs}).
+  --cwd <path>      Working directory (default: process.cwd()).
+  --no-strict       Disable strict template rendering. By default, a template
+                    that references an undefined field (typos, missing symbols)
+                    fails the build. Pass --no-strict to fall back to silent
+                    empty output — useful only during migration.
 `)
 }
 
@@ -33,7 +45,8 @@ async function main(): Promise<void> {
   if (command === 'build') {
     const cwd = parseFlag('--cwd') ?? process.cwd()
     const configPath = parseFlag('--config')
-    await runBuild({ cwd, configPath })
+    const strict = !hasFlag('--no-strict')
+    await runBuild({ cwd, configPath, strict })
     return
   }
   console.error(`vellum: unknown command: ${command}`)

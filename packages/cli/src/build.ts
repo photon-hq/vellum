@@ -8,6 +8,13 @@ import { findConfig, loadConfig } from './config'
 export interface BuildCommandOptions {
   cwd: string
   configPath?: string
+  /**
+   * When `false`, overrides the engine's default strict mode — undefined
+   * template expressions render as empty instead of failing the build.
+   * The config file's engine settings are authoritative unless this is
+   * explicitly set.
+   */
+  strict?: boolean
 }
 
 export async function runBuild(opts: BuildCommandOptions): Promise<void> {
@@ -26,6 +33,13 @@ export async function runBuild(opts: BuildCommandOptions): Promise<void> {
   const config = await loadConfig(configPath)
   if (!config.root)
     config.root = cwd
+
+  // CLI flag override: if the engine has a mutable `strict` property
+  // (NunjucksEngine does), honor the flag. Keeps the CLI out of
+  // engine-implementation details but still lets `--no-strict` work.
+  if (opts.strict === false && 'strict' in config.engine)
+    (config.engine as { strict: boolean }).strict = false
+
   const vellum = new Vellum(config)
 
   const start = Date.now()

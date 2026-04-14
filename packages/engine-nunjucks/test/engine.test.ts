@@ -119,8 +119,18 @@ describe('nunjucksEngine', () => {
     expect(result).toBe('const u = new User()')
   })
 
-  it('handles missing symbols gracefully', async () => {
-    const result = await engine.render(
+  it('strict mode (default) fails on missing symbols — no silent empty output', async () => {
+    await expect(
+      engine.render(
+        '{% set t = symbol("ts:m#Missing") %}{{ t }}',
+        makeContext([]),
+      ),
+    ).rejects.toThrow()
+  })
+
+  it('lenient mode renders missing symbols as empty', async () => {
+    const lenient = new NunjucksEngine({ strict: false })
+    const result = await lenient.render(
       '{% set t = symbol("ts:m#Missing") %}{{ t }}',
       makeContext([]),
     )
