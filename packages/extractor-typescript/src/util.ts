@@ -47,33 +47,91 @@ export function getLeadingJSDoc(node: ts.Node, sourceFile: ts.SourceFile): strin
 }
 
 /**
- * Pretty-print the declaration header (without body) for a given node.
+ * Canonical declaration text for a node — JSDoc stripped, bodies removed,
+ * printer-normalized. Mirrors what `tsc --declaration` would emit for the
+ * surface of the symbol.
  */
 const RE_TRAILING_SEMI = /;$/
 
+const declarationPrinter = ts.createPrinter({
+  removeComments: true,
+  omitTrailingSemicolon: false,
+})
+
+function stripBodies(context: ts.TransformationContext): ts.Visitor {
+  const visit: ts.Visitor = (node) => {
+    if (ts.isFunctionDeclaration(node)) {
+      return ts.factory.updateFunctionDeclaration(
+        node,
+        node.modifiers,
+        node.asteriskToken,
+        node.name,
+        node.typeParameters,
+        node.parameters,
+        node.type,
+        undefined,
+      )
+    }
+    if (ts.isMethodDeclaration(node)) {
+      return ts.factory.updateMethodDeclaration(
+        node,
+        node.modifiers,
+        node.asteriskToken,
+        node.name,
+        node.questionToken,
+        node.typeParameters,
+        node.parameters,
+        node.type,
+        undefined,
+      )
+    }
+    if (ts.isConstructorDeclaration(node)) {
+      return ts.factory.updateConstructorDeclaration(
+        node,
+        node.modifiers,
+        node.parameters,
+        undefined,
+      )
+    }
+    if (ts.isGetAccessor(node)) {
+      return ts.factory.updateGetAccessorDeclaration(
+        node,
+        node.modifiers,
+        node.name,
+        node.parameters,
+        node.type,
+        undefined,
+      )
+    }
+    if (ts.isSetAccessor(node)) {
+      return ts.factory.updateSetAccessorDeclaration(
+        node,
+        node.modifiers,
+        node.name,
+        node.parameters,
+        undefined,
+      )
+    }
+    return ts.visitEachChild(node, visit, context)
+  }
+  return visit
+}
+
 export function formatSignature(node: ts.Node, sourceFile: ts.SourceFile): string {
-  if (ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node)) {
-    const name = node.name?.getText(sourceFile) ?? ''
-    const tps = node.typeParameters?.map(t => t.getText(sourceFile)).join(', ')
-    const tpStr = tps ? `<${tps}>` : ''
-    const params = node.parameters.map(p => p.getText(sourceFile)).join(', ')
-    const ret = node.type ? `: ${node.type.getText(sourceFile)}` : ''
-    const prefix = ts.isFunctionDeclaration(node) ? 'function ' : ''
-    return `${prefix}${name}${tpStr}(${params})${ret}`
-  }
-  if (ts.isVariableStatement(node)) {
+  if (ts.isVariableStatement(node))
     return node.getText(sourceFile).replace(RE_TRAILING_SEMI, '')
-  }
-  if (ts.isClassDeclaration(node)) {
-    // Header only: `class Name<T> extends A implements B`
-    const name = node.name?.getText(sourceFile) ?? ''
-    const tps = node.typeParameters?.map(t => t.getText(sourceFile)).join(', ')
-    const tpStr = tps ? `<${tps}>` : ''
-    const heritage = (node.heritageClauses ?? [])
-      .map(h => h.getText(sourceFile))
-      .join(' ')
-    return `class ${name}${tpStr}${heritage ? ` ${heritage}` : ''}`
-  }
-  // Interfaces, type aliases, enums — full text is a reasonable signature.
-  return node.getText(sourceFile)
+
+  // Detach from source positions so leading JSDoc trivia isn't re-emitted by
+  // the printer.
+  const synth = (ts as unknown as {
+    getSynthesizedDeepClone: <T extends ts.Node>(n: T) => T
+  }).getSynthesizedDeepClone(node)
+
+  const result = ts.transform(synth, [
+    ctx => n => ts.visitNode(n, stripBodies(ctx)) as ts.Node,
+  ])
+  const stripped = result.transformed[0] as ts.Node
+  const text = declarationPrinter.printNode(ts.EmitHint.Unspecified, stripped, sourceFile)
+  result.dispose()
+  return text
 }

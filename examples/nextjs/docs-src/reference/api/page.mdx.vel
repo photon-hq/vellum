@@ -9,7 +9,7 @@ All exported functions from `src/lib/api.ts`.
 
 {{ fn.doc.summary }}
 
-{{ fn | mdxSignature | safe }}
+{{ fn | signature | safe }}
 
 {%- if fn.parameters and fn.parameters.length > 0 %}
 

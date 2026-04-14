@@ -5,11 +5,18 @@ export function buildFilters(ctx: TemplateContext) {
   const renderCtx = { profile: ctx.profile, resolve }
 
   return {
-    mdxLink: (sym: Symbol) => ctx.profile.link(sym, renderCtx),
-    mdxSignature: (sym: Symbol) => ctx.profile.signature(sym, renderCtx),
+    link: (sym: Symbol) => ctx.profile.link(sym, renderCtx),
+    signature: (sym: Symbol) => ctx.profile.signature(sym, renderCtx),
     typeRef: (sym: Symbol) => ctx.profile.typeRef(sym, renderCtx),
     typeCard: (sym: Symbol) => ctx.profile.typeCard(sym, renderCtx),
     typeString: (ts: TypeString) => ctx.profile.typeString(ts, renderCtx),
+
+    /**
+     * Canonical declaration text for a symbol. Populated by the extractor
+     * using the host language's native printer (e.g. `ts.createPrinter` for
+     * TypeScript). Equivalent to `{{ sym.signature }}`.
+     */
+    declaration: (sym: Symbol) => sym.signature,
 
     /** Return the nth @example code block, or empty string. */
     example: (sym: Symbol, n: number = 0) => {

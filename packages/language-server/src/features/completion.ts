@@ -30,11 +30,12 @@ const SYMBOL_KINDS = [
 ]
 
 const FILTER_NAMES = [
-  { name: 'mdxSignature', detail: 'Render signature as a code fence' },
-  { name: 'mdxLink', detail: 'Render name as a link' },
+  { name: 'signature', detail: 'Signature as a code fence (profile-specific)' },
+  { name: 'link', detail: 'Name as a link (profile-specific)' },
   { name: 'typeRef', detail: 'Render inline type reference with tooltip' },
   { name: 'typeCard', detail: 'Render full card: signature + docs + examples' },
   { name: 'typeString', detail: 'Render a TypeString inline' },
+  { name: 'declaration', detail: 'Canonical declaration text (alias for .signature)' },
   { name: 'example', detail: 'Get nth @example code block' },
   { name: 'summary', detail: 'Get doc summary text' },
   { name: 'safe', detail: 'Mark as HTML-safe (Nunjucks built-in)' },

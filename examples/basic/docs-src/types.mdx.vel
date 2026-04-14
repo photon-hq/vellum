@@ -7,7 +7,7 @@ This page is generated from `src/types.ts`.
 
 {{ t.doc.summary }}
 
-{{ t | mdxSignature | safe }}
+{{ t | signature | safe }}
 
 {% if t.members %}
 **Fields**
@@ -30,4 +30,4 @@ This page is generated from `src/types.ts`.
 
 {{ a.doc.summary }}
 
-{{ a | mdxSignature | safe }}
+{{ a | signature | safe }}

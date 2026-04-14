@@ -6,11 +6,12 @@ import { nodeAtOffset, parseTemplate, resolveVariableType } from '../template-pa
 const RE_WORD = /(\w+)/
 
 const FILTER_DOCS: Record<string, string> = {
-  mdxSignature: 'Renders the symbol\'s signature as a fenced code block.',
-  mdxLink: 'Renders the symbol name as a clickable link.',
-  typeRef: 'Renders an inline type reference with tooltip (if the profile supports it).',
-  typeCard: 'Renders a full card: signature + docs + examples.',
-  typeString: 'Renders a `TypeString` object as inline code.',
+  signature: 'Renders the symbol\'s signature as a fenced code block (routes through the active renderer profile).',
+  link: 'Renders the symbol name as a clickable link (routes through the active renderer profile).',
+  typeRef: 'Renders an inline type reference with tooltip — profile-dependent.',
+  typeCard: 'Renders a full card: signature + docs + examples — profile-dependent.',
+  typeString: 'Renders a `TypeString` object as inline code — profile-dependent.',
+  declaration: 'Returns the canonical declaration text for a symbol (printer-normalized, JSDoc stripped). Equivalent to `sym.signature`.',
   example: 'Returns the nth `@example` code block. Usage: `sym | example(0)`.',
   summary: 'Extracts the doc summary from a Symbol or DocComment.',
   safe: 'Marks the string as HTML-safe (Nunjucks built-in).',

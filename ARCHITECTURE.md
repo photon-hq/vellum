@@ -158,8 +158,9 @@ interface SymbolQuery {
 Shipped filters:
 
 ```
-{{ sym | mdxLink }}         render name as a link to its docs page
-{{ sym | mdxSignature }}    signature as a code fence, typeRefs linkified
+{{ sym | link }}            render name as a link to its docs page (profile-routed)
+{{ sym | signature }}       signature as a code fence, typeRefs linkified (profile-routed)
+{{ sym | declaration }}     raw canonical declaration text (alias for sym.signature)
 {{ str | tsdoc }}           markdown-safe tsdoc rendering
 {{ sym | example(0) }}      nth @example block
 ```
@@ -174,7 +175,7 @@ Example template:
 {{ t.doc.summary }}
 
 \```ts
-{{ t | mdxSignature }}
+{{ t | signature }}
 \```
 
 {% for c in symbols({ module: "src/constants.ts", kind: "const" }) %}
@@ -246,7 +247,9 @@ interface Symbol {
   visibility: 'public' | 'protected' | 'private' | 'internal'
   exported: boolean
 
-  signature: string // pretty-printed declaration, as-written
+  signature: string // canonical declaration — printer-normalized, JSDoc stripped,
+                    // bodies removed. For TS, extractor uses `ts.createPrinter`
+                    // on a body-stripped synthetic clone (matches `tsc --declaration`).
   signatureResolved?: string // generics/aliases expanded, when different
   typeRefs: TypeRef[] // ranges in `signature` that link to other SymbolIds
 

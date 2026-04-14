@@ -57,7 +57,7 @@ export interface ForBinding {
   scopeEnd: number
 }
 
-/** A filter in a pipe chain, e.g. `| mdxSignature`. */
+/** A filter in a pipe chain, e.g. `| signature`. */
 export interface FilterRef {
   type: 'filter'
   name: string

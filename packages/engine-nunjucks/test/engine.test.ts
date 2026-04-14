@@ -76,14 +76,14 @@ describe('nunjucksEngine', () => {
     expect(result).toBe('1')
   })
 
-  it('provides mdxSignature filter', async () => {
+  it('provides signature filter', async () => {
     const sym = makeSym({
       id: 'ts:m#User',
       name: 'User',
       signature: 'interface User { id: string }',
     })
     const result = await engine.render(
-      '{% set t = symbol("ts:m#User") %}{{ t | mdxSignature | safe }}',
+      '{% set t = symbol("ts:m#User") %}{{ t | signature | safe }}',
       makeContext([sym]),
     )
     expect(result).toContain('```ts')

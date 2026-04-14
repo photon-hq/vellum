@@ -61,11 +61,11 @@ describe('parseTemplate', () => {
   })
 
   it('parses filter references', () => {
-    const text = '{{ t | mdxSignature | safe }}'
+    const text = '{{ t | signature | safe }}'
     const nodes = parseTemplate(text)
     const filters = nodes.filter(n => n.type === 'filter')
     expect(filters).toHaveLength(2)
-    expect(filters[0]!.name).toBe('mdxSignature')
+    expect(filters[0]!.name).toBe('signature')
     expect(filters[1]!.name).toBe('safe')
   })
 

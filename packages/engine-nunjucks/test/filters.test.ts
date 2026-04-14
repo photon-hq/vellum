@@ -59,10 +59,10 @@ describe('filters', () => {
     expect(result).toContain('new Foo()')
   })
 
-  it('mdxLink renders name as code', async () => {
+  it('link renders name as code', async () => {
     const sym = makeSym({ id: 'ts:m#Bar', name: 'Bar' })
     const result = await engine.render(
-      '{% set t = symbol("ts:m#Bar") %}{{ t | mdxLink | safe }}',
+      '{% set t = symbol("ts:m#Bar") %}{{ t | link | safe }}',
       makeContext([sym]),
     )
     expect(result).toContain('`Bar`')
@@ -100,5 +100,22 @@ describe('filters', () => {
       makeContext([]),
     )
     expect(result).toBe('[]')
+  })
+
+  it('declaration returns the canonical signature populated by the extractor', async () => {
+    const canonical = `interface SendReceipt {
+    readonly guid: MessageGuid;
+    clientMessageId?: string;
+}`
+    const sym = makeSym({
+      id: 'ts:m#SendReceipt',
+      name: 'SendReceipt',
+      signature: canonical,
+    })
+    const result = await engine.render(
+      '{% set t = symbol("ts:m#SendReceipt") %}{{ t | declaration }}',
+      makeContext([sym]),
+    )
+    expect(result).toBe(canonical)
   })
 })

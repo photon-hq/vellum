@@ -6,7 +6,7 @@
 
 {{ fn.doc.summary }}
 
-{{ fn | mdxSignature | safe }}
+{{ fn | signature | safe }}
 
 {% if fn.parameters.length > 0 %}
 **Parameters**

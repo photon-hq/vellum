@@ -82,7 +82,7 @@ Create `docs-src/types.mdx.vel`:
 
 {{ t.doc.summary }}
 
-{{ t | mdxSignature | safe }}
+{{ t | signature | safe }}
 
 {% for m in t.members -%}
 - **`{{ m.name }}`**{% if m.optional %} _(optional)_{% endif %} — {{ m.doc.summary }}
@@ -149,15 +149,28 @@ syntax). Templates have access to:
 
 ### Filters
 
+Most filters route through the active **renderer profile**, so the same
+template emits different markup depending on the profile you configured
+(`MarkdownProfile`, `MintlifyProfile`, your own). Filters are the seam
+between authors and host-specific output.
+
 ```njk
-{{ sym | mdxSignature | safe }}    {# signature as a code fence #}
+{# Profile-routed — output depends on the configured renderer profile #}
+{{ sym | signature | safe }}       {# signature wrapped in a code fence #}
+{{ sym | link | safe }}            {# name as a link #}
 {{ sym | typeRef | safe }}         {# inline name, tooltip if profile supports it #}
 {{ sym | typeCard | safe }}        {# full card: signature + docs + examples #}
-{{ sym | mdxLink | safe }}         {# name as a link #}
+{{ ts  | typeString | safe }}      {# render a TypeString inline #}
+
+{# Plain — no profile involvement, returns raw strings #}
+{{ sym | declaration }}            {# canonical declaration text (alias for sym.signature) #}
 {{ sym | summary }}                {# just the doc summary text #}
 {{ sym | example(0) }}             {# nth @example code block #}
-{{ ts  | typeString | safe }}      {# render a TypeString inline #}
 ```
+
+Use `declaration` (or `sym.signature`) when you need the raw declaration
+string to drop into a fenced block, JSX prop, tooltip, or table cell. Use
+`signature` when you want the profile to decide the fence/formatting.
 
 ### Built-in partials
 
@@ -184,7 +197,7 @@ sym.name                   "User"
 sym.kind                   "interface" | "type" | "function" | "const" | ...
 sym.module                 "src/types.ts"
 sym.exported               true
-sym.signature              full declaration as-written
+sym.signature              canonical declaration (printer-normalized, JSDoc stripped, bodies removed — matches `tsc --declaration` for TS)
 sym.doc.summary            first paragraph of TSDoc
 sym.doc.description        body after summary
 sym.doc.params             { paramName: "description" }
@@ -221,8 +234,9 @@ Module paths are relative to the project root set in `vellum.config.ts`.
 
 ## Renderer profiles
 
-A profile controls how filters like `mdxSignature` and `typeRef` produce
-output. Swap the profile to change target host without changing templates.
+A profile controls how filters like `signature`, `link`, `typeRef`, and
+`typeCard` produce output. Swap the profile to change target host without
+changing templates.
 
 | Package                     | Target    | Description                                        |
 | --------------------------- | --------- | -------------------------------------------------- |
