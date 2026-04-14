@@ -1,5 +1,16 @@
 # vellum-example-nextjs
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [8d2ae92]
+  - @vellum-docs/extractor-typescript@0.2.3
+  - @vellum-docs/core@0.2.3
+  - @vellum-docs/engine-nunjucks@0.2.3
+  - @vellum-docs/profile-markdown@0.2.3
+  - @vellum-docs/cli@0.2.3
+
 ## 0.0.5
 
 ### Patch Changes
