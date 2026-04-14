@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    include: ['packages/*/test/**/*.test.ts'],
+    include: ['packages/*/test/**/*.test.ts', 'apps/*/test/**/*.test.ts'],
     // Extractor tests build real `ts.Program`s; under v8 coverage on CI they
     // routinely push past the 5s default. 30s is generous and applies
     // uniformly instead of scattering per-test overrides.

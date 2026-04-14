@@ -13,6 +13,8 @@
     "typecheck": "turbo run typecheck",
     "example": "turbo run build --filter=vellum-example-basic",
     "example:nextjs": "turbo run docs:build --filter=vellum-example-nextjs",
+    "docs": "turbo run docs:build --filter=vellum-docs-site",
+    "docs:dev": "turbo run dev --filter=vellum-docs-site",
     "test": "turbo run build --filter='./packages/*' && vitest run",
     "test:coverage": "turbo run build --filter='./packages/*' && vitest run --coverage",
     "lint": "eslint .",

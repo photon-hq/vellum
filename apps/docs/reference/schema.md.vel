@@ -1,0 +1,44 @@
+# Symbol schema
+
+The contract every extractor produces and every template reads from.
+The schema is deliberately flat and language-agnostic — strings and
+optional fields, not recursive type trees. See
+[Language-agnostic by restraint](/philosophy#_2-language-agnostic-by-restraint)
+for the reasoning.
+
+This page is generated from [`packages/core/src/types.ts`](https://github.com/photon-hq/vellum/blob/master/packages/core/src/types.ts).
+
+{% for sym in symbols({ module: "packages/core/src/types.ts", kind: "interface" }) %}
+## `{{ sym.name }}`
+
+{{ sym.doc.summary }}
+
+```ts
+{{ sym | declaration }}
+```
+
+{% if sym.doc.description %}{{ sym.doc.description }}
+
+{% endif %}
+{%- if sym.members and sym.members.length > 0 -%}
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+{% for m in sym.members -%}
+| `{{ m.name }}`{% if m.optional %} _(optional)_{% endif %}{% if m.readonly %} _(readonly)_{% endif %} | {{ m.type | cell }} | {% if m.doc.summary %}{{ m.doc.summary | cell }}{% endif %} |
+{% endfor %}
+
+{% endif %}
+{% endfor %}
+
+## Type aliases
+
+{% for sym in symbols({ module: "packages/core/src/types.ts", kind: "type" }) %}
+### `{{ sym.name }}`
+
+{{ sym.doc.summary }}
+
+```ts
+{{ sym | declaration }}
+```
+
+{% endfor %}

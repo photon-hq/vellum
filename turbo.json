@@ -7,7 +7,12 @@
     },
     "docs:build": {
       "dependsOn": ["^build"],
-      "outputs": ["docs/**", "app/docs/**"]
+      "outputs": ["docs/**", "app/docs/**", ".vitepress/dist/**"]
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
     },
     "test": {
       "dependsOn": ["^build"],

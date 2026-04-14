@@ -1,0 +1,114 @@
+# Extractors
+
+Every language extractor implements the same narrow interface. The
+orchestrator calls it; the schema it produces is
+[language-agnostic](/reference/schema).
+
+## Interface
+
+{% set ex = symbol("ts:packages/core/src/extractor.ts#Extractor") %}
+
+{{ ex.doc.summary }}
+
+```ts
+{{ ex | declaration }}
+```
+
+{% if ex.members %}
+| Field / method | Type | Description |
+| -------------- | ---- | ----------- |
+{% for m in ex.members -%}
+| `{{ m.name }}` | {{ m.type | cell }} | {% if m.doc.summary %}{{ m.doc.summary | cell }}{% endif %} |
+{% endfor %}
+{% endif %}
+
+## `ExtractInput`
+
+{% set ei = symbol("ts:packages/core/src/extractor.ts#ExtractInput") %}
+
+{{ ei.doc.summary }}
+
+```ts
+{{ ei | declaration }}
+```
+
+{% if ei.members %}
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+{% for m in ei.members -%}
+| `{{ m.name }}` | {{ m.type | cell }} | {% if m.doc.summary %}{{ m.doc.summary | cell }}{% endif %} |
+{% endfor %}
+{% endif %}
+
+## `PackageFile`
+
+{% set pf = symbol("ts:packages/core/src/extractor.ts#PackageFile") %}
+
+{{ pf.doc.summary }}
+
+```ts
+{{ pf | declaration }}
+```
+
+{% if pf.members %}
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+{% for m in pf.members -%}
+| `{{ m.name }}` | {{ m.type | cell }} | {% if m.doc.summary %}{{ m.doc.summary | cell }}{% endif %} |
+{% endfor %}
+{% endif %}
+
+## Shipped extractors
+
+### `TypeScriptExtractor`
+
+Built directly on the `typescript` package with a custom `CompilerHost`.
+TSDoc comments parsed with `@microsoft/tsdoc`. Handles:
+
+- Interfaces, type aliases, classes, enums, functions, const/let
+  variables
+- Generics (type parameters + constraints + defaults)
+- Discriminated unions and `as const` objects (promoted to
+  `kind: 'enum'` — see [Shape over syntax](/philosophy#_1-shape-over-syntax))
+- Cross-file typeRefs via the checker
+- Package `.d.ts` extraction with re-export resolution
+
+Package: `@vellum-docs/extractor-typescript`.
+
+```ts
+import { TypeScriptExtractor } from '@vellum-docs/extractor-typescript'
+
+extractors: [new TypeScriptExtractor()],
+```
+
+## Writing a custom extractor
+
+Implement the `Extractor` interface — three fields, one async method
+that returns `Symbol[]`. The shape of `Symbol` is documented in
+[Symbol schema](/reference/schema); match it and your language is in.
+
+```ts
+import type { ExtractInput, Extractor, Symbol } from '@vellum-docs/core'
+
+export class PythonExtractor implements Extractor {
+  readonly language = 'py'
+  readonly extensions = ['.py'] as const
+
+  async extract(input: ExtractInput): Promise<Symbol[]> {
+    // Parse files in input.files, return Symbol records.
+  }
+}
+```
+
+Register it:
+
+```ts
+extractors: [new TypeScriptExtractor(), new PythonExtractor()],
+sources: {
+  ts: { include: ['src'] },
+  py: { include: ['lib'] },
+},
+```
+
+See [Language-agnostic by restraint](/philosophy#_2-language-agnostic-by-restraint)
+for the schema constraints a new extractor must respect.

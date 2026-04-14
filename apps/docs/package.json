@@ -1,0 +1,22 @@
+{
+  "name": "vellum-docs-site",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "docs:extract": "vellum build",
+    "dev": "vellum build && vitepress dev",
+    "docs:build": "vellum build && vitepress build",
+    "preview": "vitepress preview"
+  },
+  "dependencies": {
+    "@vellum-docs/cli": "workspace:*",
+    "@vellum-docs/core": "workspace:*",
+    "@vellum-docs/engine-nunjucks": "workspace:*",
+    "@vellum-docs/extractor-typescript": "workspace:*",
+    "@vellum-docs/profile-markdown": "workspace:*"
+  },
+  "devDependencies": {
+    "shiki": "^2.0.0",
+    "vitepress": "^1.5.0"
+  }
+}

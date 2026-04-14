@@ -1,0 +1,8 @@
+# Rendered output from *.md.vel sources
+reference/schema.md
+reference/profiles.md
+reference/extractors.md
+
+# VitePress build output and cache
+.vitepress/dist/
+.vitepress/cache/

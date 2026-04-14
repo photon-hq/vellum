@@ -1,0 +1,91 @@
+# Renderer profiles
+
+A **renderer profile** controls how profile-routed filters
+(`signature`, `link`, `typeRef`, `typeCard`, `typeString`, `cell`)
+turn `Symbol` records into markup. Swap the profile in
+`vellum.config.ts` and the same templates emit different output
+without a single template edit.
+
+## Interface
+
+{% set rp = symbol("ts:packages/core/src/profile.ts#RendererProfile") %}
+
+{{ rp.doc.summary }}
+
+```ts
+{{ rp | declaration }}
+```
+
+{% if rp.members %}
+| Method / field | Signature | Description |
+| -------------- | --------- | ----------- |
+{% for m in rp.members -%}
+| `{{ m.name }}` | {{ m.type | cell }} | {% if m.doc.summary %}{{ m.doc.summary | cell }}{% endif %} |
+{% endfor %}
+{% endif %}
+
+## `RenderContext`
+
+{% set rc = symbol("ts:packages/core/src/profile.ts#RenderContext") %}
+
+{{ rc.doc.summary }}
+
+```ts
+{{ rc | declaration }}
+```
+
+{% if rc.members %}
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+{% for m in rc.members -%}
+| `{{ m.name }}` | {{ m.type | cell }} | {% if m.doc.summary %}{{ m.doc.summary | cell }}{% endif %} |
+{% endfor %}
+{% endif %}
+
+## Shipped profiles
+
+### `MarkdownProfile`
+
+Plain Markdown / MDX. Code fences, `` `code` ``, no components. Target
+any host that renders CommonMark — VitePress, Docusaurus, Next.js,
+plain static.
+
+Package: `@vellum-docs/profile-markdown`.
+
+### `MintlifyProfile`
+
+Emits Mintlify MDX — `<Tooltip>`, `<Card>`, `<CodeGroup>`,
+`<ParamField>`, `<ResponseField>`, plus plain markdown. Scoped to
+Mintlify's built-in component vocabulary so templates don't need to
+know about specific Mintlify features.
+
+Package: `@vellum-docs/profile-mintlify`.
+
+## Writing a custom profile
+
+Implement `RendererProfile`:
+
+```ts
+import type { RenderContext, RendererProfile, Symbol, TypeString } from '@vellum-docs/core'
+
+export class MyProfile implements RendererProfile {
+  readonly name = 'my-host'
+  readonly targetExtensions = ['.mdx'] as const
+
+  typeRef(sym: Symbol, ctx: RenderContext): string { /* ... */ }
+  signature(sym: Symbol, ctx: RenderContext): string { /* ... */ }
+  typeString(ts: TypeString, ctx: RenderContext): string { /* ... */ }
+  typeCard(sym: Symbol, ctx: RenderContext): string { /* ... */ }
+  link(sym: Symbol, ctx: RenderContext): string { /* ... */ }
+  cell(value: string, ctx: RenderContext): string { /* ... */ }
+}
+```
+
+Then register it:
+
+```ts
+// vellum.config.ts
+profile: new MyProfile(),
+```
+
+No template changes needed.
