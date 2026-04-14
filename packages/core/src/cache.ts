@@ -5,6 +5,13 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { readdir, readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 
+/**
+ * Bump when the Symbol shape changes in a way that invalidates cached entries.
+ * Including this in the cache key means old entries are silently ignored after
+ * an upgrade — no explicit migration needed.
+ */
+export const CACHE_SCHEMA_VERSION = 1
+
 export interface CacheKey {
   language: string
   file: string
@@ -27,7 +34,7 @@ export class InMemoryCache implements Cache {
   private store = new Map<string, CacheEntry>()
 
   private toKey(k: CacheKey): string {
-    return `${k.language}:${k.file}:${k.hash}`
+    return `${CACHE_SCHEMA_VERSION}:${k.language}:${k.file}:${k.hash}`
   }
 
   async get(key: CacheKey): Promise<CacheEntry | null> {
@@ -72,8 +79,9 @@ export class DiskCache implements Cache {
 
   private stableKey(key: CacheKey): string {
     // Hash the composite key so filenames stay short and filesystem-safe.
+    // CACHE_SCHEMA_VERSION ensures entries from older schema versions are ignored.
     return createHash('sha1')
-      .update(`${key.language}\0${key.file}\0${key.hash}`)
+      .update(`${CACHE_SCHEMA_VERSION}\0${key.language}\0${key.file}\0${key.hash}`)
       .digest('hex')
   }
 

@@ -56,6 +56,16 @@ export class InMemorySymbolIndex implements SymbolIndex {
 
   add(symbols: Symbol[]): void {
     for (const s of symbols) {
+      const existing = this.byId.get(s.id)
+      if (existing) {
+        // Remove old entry from byModule to prevent duplicates across calls.
+        const oldList = this.byModule.get(existing.module)
+        if (oldList) {
+          const idx = oldList.findIndex(e => e.id === s.id)
+          if (idx !== -1)
+            oldList.splice(idx, 1)
+        }
+      }
       this.byId.set(s.id, s)
       const list = this.byModule.get(s.module) ?? []
       list.push(s)
