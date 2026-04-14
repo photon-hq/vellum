@@ -272,7 +272,8 @@ interface Symbol {
   value?: Literal | null // const/var — statically resolved literal
   mutable?: boolean
 
-  variants?: EnumVariant[]
+  variants?: EnumVariant[] // enums — also populated for `as const` enum
+                           // pattern, see "as-const-enum promotion" below
 
   extra?: Record<string, unknown> // language-specific escape hatch
 }
@@ -578,6 +579,28 @@ the host's build.
 **Cost:** Every deploy depends on Vellum running. Acceptable because the
 preprocessor is a pure function of source + config, and failures fail
 loudly at build time.
+
+### 6. `as const` enum promotion — `kind` tracks docs intent, not source syntax
+
+**Chosen:** The TS extractor inspects `const` values. When every property
+is literal-typed (string/number/boolean) — the `as const` enum pattern,
+or the `declare const X: { readonly ... }` d.ts equivalent — it promotes
+`kind` to `'enum'` and populates `variants[]`. The self-referential
+`type X = (typeof X)[keyof typeof X]` sibling is suppressed.
+
+**Why:** Vellum is a docs tool, not a type system. A reader looking at
+`MessageEffect` doesn't care whether the SDK used `enum` or `as const`;
+they want the same table. Promoting on shape lets template authors write
+one renderer for both source forms. `as const` objects are widely
+recommended over `enum` (TS handbook, `prefer-literal-enum-member`), so
+an SDK shouldn't document worse just because it picked the modern form.
+
+**Cost:** `sym.kind` no longer matches the source keyword exactly —
+`kind === 'enum'` can mean either `enum` or `as const` object. Templates
+that care can still disambiguate via `sym.signature`, which stays as the
+source form. The type-vs-value distinction the schema is otherwise
+careful about is deliberately relaxed here — docs pragmatism wins over
+schema purity.
 
 ---
 

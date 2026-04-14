@@ -235,6 +235,69 @@ function extractTypeAlias(node: ts.TypeAliasDeclaration, ctx: WalkContext): VSym
   }
 }
 
+/**
+ * Detect the "as-const enum" pattern:
+ *
+ *   const X = { a: "foo", b: "bar" } as const
+ *   declare const X: { readonly a: "foo"; readonly b: "bar" }
+ *
+ * Both forms produce an object whose property *types* are literals
+ * (string/number/boolean). From a docs consumer's perspective this is
+ * interchangeable with a real `enum`, so we promote it and populate
+ * `variants` — templates can render both source forms identically.
+ *
+ * Returns the variant list on match, or `null` when any property isn't
+ * literal-typed (regular configs, functions, nested objects all fall
+ * through to the normal const extraction path).
+ */
+function detectAsConstEnum(decl: ts.VariableDeclaration, ctx: WalkContext): EnumVariant[] | null {
+  let type: ts.Type
+  try {
+    type = ctx.checker.getTypeAtLocation(decl)
+  }
+  catch {
+    return null
+  }
+  const props = type.getProperties()
+  if (props.length === 0)
+    return null
+
+  const variants: EnumVariant[] = []
+  for (const prop of props) {
+    const propType = ctx.checker.getTypeOfSymbolAtLocation(prop, decl)
+    const literal = literalFromType(propType)
+    if (!literal)
+      return null
+
+    const propDecls = prop.getDeclarations()
+    const propDecl = propDecls?.[0]
+    const propDoc = propDecl
+      ? docOrEmpty(propDecl, propDecl.getSourceFile())
+      : emptyDocComment()
+
+    variants.push({ name: prop.name, value: literal, doc: propDoc })
+  }
+  return variants
+}
+
+function literalFromType(t: ts.Type): Literal | null {
+  if (t.isStringLiteral()) {
+    const v = (t as ts.StringLiteralType).value
+    return { kind: 'string', text: JSON.stringify(v), value: v }
+  }
+  if (t.isNumberLiteral()) {
+    const v = (t as ts.NumberLiteralType).value
+    return { kind: 'number', text: String(v), value: v }
+  }
+  if (t.flags & ts.TypeFlags.BooleanLiteral) {
+    // `intrinsicName` is `"true"` or `"false"` on boolean literal types —
+    // not in the public ts typings.
+    const v = (t as unknown as { intrinsicName?: string }).intrinsicName === 'true'
+    return { kind: 'boolean', text: String(v), value: v }
+  }
+  return null
+}
+
 function extractVariable(statement: ts.VariableStatement, decl: ts.VariableDeclaration, ctx: WalkContext): VSymbol | null {
   if (!ts.isIdentifier(decl.name))
     return null
@@ -264,10 +327,16 @@ function extractVariable(statement: ts.VariableStatement, decl: ts.VariableDecla
     }
   }
 
+  // Promote the as-const-enum pattern to `kind: 'enum'`. `signature`, `value`,
+  // and `valueType` stay as the source form (`declare const ...` / `{...} as
+  // const`) — `kind` drives template choice; `signature` still matches tsc.
+  const variants = isConst ? detectAsConstEnum(decl, ctx) : null
+  const kind: VSymbol['kind'] = variants ? 'enum' : isConst ? 'const' : 'variable'
+
   return {
     id: makeId(ctx.modulePath, name),
     name,
-    kind: isConst ? 'const' : 'variable',
+    kind,
     language: 'ts',
     module: ctx.modulePath,
     source: locationOf(decl, ctx.sourceFile, ctx.root),
@@ -282,6 +351,7 @@ function extractVariable(statement: ts.VariableStatement, decl: ts.VariableDecla
     mutable: !isConst,
     valueType,
     value,
+    ...(variants ? { variants } : {}),
   }
 }
 
@@ -470,7 +540,28 @@ export function extractFromFile(sourceFile: ts.SourceFile, checker: ts.TypeCheck
         results.push(s)
     }
   }
-  return results
+  return suppressSelfReferentialAliases(results)
+}
+
+/**
+ * When `extractVariable` promotes an `as-const-enum` const to `kind: 'enum'`,
+ * the common sibling `type X = (typeof X)[keyof typeof X]` becomes redundant
+ * — it exists purely to re-export the object's value type as a type name.
+ * Suppress it so doc authors don't see a duplicate entry for `X`.
+ */
+function suppressSelfReferentialAliases(symbols: VSymbol[]): VSymbol[] {
+  const promotedEnumNames = new Set(
+    symbols.filter(s => s.kind === 'enum' && s.variants !== undefined).map(s => s.name),
+  )
+  if (promotedEnumNames.size === 0)
+    return symbols
+
+  return symbols.filter((s) => {
+    if (s.kind !== 'type' || !promotedEnumNames.has(s.name))
+      return true
+    const alias = s.aliasOf?.text.replace(/\s+/g, '')
+    return alias !== `(typeof${s.name})[keyoftypeof${s.name}]`
+  })
 }
 
 /**
@@ -542,5 +633,5 @@ function extractFromModuleExports(sourceFile: ts.SourceFile, checker: ts.TypeChe
       results.push(extracted)
     }
   }
-  return results
+  return suppressSelfReferentialAliases(results)
 }

@@ -208,13 +208,53 @@ sym.doc.customTags         { "@tagName": ["value"] }
 sym.members[]              interface/class fields (each has .name, .type, .doc, ...)
 sym.parameters[]           function params (each has .name, .type, .optional, .doc)
 sym.returnType             { text, refs[] }
-sym.variants[]             enum members
+sym.variants[]             enum members (also populated for the `as const` enum pattern — see below)
 sym.value                  const value ({ text, kind })
 sym.tags[]                 ["deprecated", "beta", ...]
 ```
 
 Full TypeScript definitions are in `@vellum-docs/core` — see
 `packages/core/src/types.ts`.
+
+### The `as const` enum pattern
+
+Many modern TypeScript libraries use an `as const` object in place of a
+real `enum` (recommended by the TypeScript handbook and
+`typescript-eslint`'s `prefer-literal-enum-member`):
+
+```ts
+export const MessageEffect = {
+  slam: 'com.apple.MobileSMS.expressivesend.impact',
+  loud: 'com.apple.MobileSMS.expressivesend.loud',
+} as const
+export type MessageEffect = (typeof MessageEffect)[keyof typeof MessageEffect]
+```
+
+From the docs consumer's perspective this is interchangeable with a real
+`enum`, so the TS extractor **promotes** it:
+
+- `sym.kind` becomes `"enum"` (not `"const"`).
+- `sym.variants[]` is populated just like for a real `enum` — one entry
+  per property with `name`, `value`, and `doc`.
+- `sym.signature` stays as the source form (`const MessageEffect = {...}`
+  or `declare const MessageEffect: {...}`) — `kind` drives rendering,
+  `signature` stays faithful.
+- The self-referential `type MessageEffect = (typeof MessageEffect)[keyof typeof MessageEffect]`
+  sibling is suppressed, so the symbol appears once.
+
+Detection is strict: all properties must have **literal** types
+(string/number/boolean). Plain object constants (`const CONFIG = { timeout: 5000 }`)
+and `as const` objects with non-literal values (functions, nested objects)
+fall through to the normal const extraction path unchanged.
+
+Templates written against `sym.variants` render both real enums and
+`as const` enums with the same code:
+
+```njk
+{% for v in sym.variants %}
+| `{{ sym.name }}.{{ v.name }}` | `{{ v.value.text }}` | {{ v.doc.summary }} |
+{% endfor %}
+```
 
 ## SymbolId format
 
