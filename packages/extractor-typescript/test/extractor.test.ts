@@ -1,11 +1,23 @@
+import type { Symbol } from '@vellum-docs/core'
 import { resolve } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { TypeScriptExtractor } from '../src'
 
 const FIXTURES = resolve(__dirname, '../../../test/fixtures/sample')
 
 describe('typeScriptExtractor', () => {
   const extractor = new TypeScriptExtractor()
+  // Building a ts.Program is expensive (~1–5s). Every assertion below reads
+  // the same extracted snapshot, so extract once and share.
+  let symbols: Symbol[]
+
+  beforeAll(async () => {
+    symbols = await extractor.extract({
+      files: [resolve(FIXTURES, 'types.ts')],
+      root: FIXTURES,
+      config: undefined,
+    })
+  })
 
   it('has correct language and extensions', () => {
     expect(extractor.language).toBe('ts')
@@ -13,13 +25,7 @@ describe('typeScriptExtractor', () => {
     expect(extractor.extensions).toContain('.tsx')
   })
 
-  it('extracts interfaces with members', async () => {
-    const symbols = await extractor.extract({
-      files: [resolve(FIXTURES, 'types.ts')],
-      root: FIXTURES,
-      config: undefined,
-    })
-
+  it('extracts interfaces with members', () => {
     const user = symbols.find(s => s.name === 'User')
     expect(user).toBeDefined()
     expect(user!.kind).toBe('interface')
@@ -27,7 +33,6 @@ describe('typeScriptExtractor', () => {
     expect(user!.module).toBe('types.ts')
     expect(user!.id).toBe('ts:types.ts#User')
 
-    // Members
     expect(user!.members).toBeDefined()
     expect(user!.members!.length).toBeGreaterThanOrEqual(3)
 
@@ -40,13 +45,7 @@ describe('typeScriptExtractor', () => {
     expect(emailMember!.optional).toBe(true)
   })
 
-  it('extracts type aliases', async () => {
-    const symbols = await extractor.extract({
-      files: [resolve(FIXTURES, 'types.ts')],
-      root: FIXTURES,
-      config: undefined,
-    })
-
+  it('extracts type aliases', () => {
     const role = symbols.find(s => s.name === 'Role')
     expect(role).toBeDefined()
     expect(role!.kind).toBe('type')
@@ -54,13 +53,7 @@ describe('typeScriptExtractor', () => {
     expect(role!.aliasOf!.text).toContain('admin')
   })
 
-  it('extracts constants with values', async () => {
-    const symbols = await extractor.extract({
-      files: [resolve(FIXTURES, 'types.ts')],
-      root: FIXTURES,
-      config: undefined,
-    })
-
+  it('extracts constants with values', () => {
     const maxPage = symbols.find(s => s.name === 'MAX_PAGE_SIZE')
     expect(maxPage).toBeDefined()
     expect(maxPage!.kind).toBe('const')
@@ -73,13 +66,7 @@ describe('typeScriptExtractor', () => {
     expect(version!.value!.kind).toBe('string')
   })
 
-  it('extracts functions with parameters and return types', async () => {
-    const symbols = await extractor.extract({
-      files: [resolve(FIXTURES, 'types.ts')],
-      root: FIXTURES,
-      config: undefined,
-    })
-
+  it('extracts functions with parameters and return types', () => {
     const getUser = symbols.find(s => s.name === 'getUser')
     expect(getUser).toBeDefined()
     expect(getUser!.kind).toBe('function')
@@ -94,13 +81,7 @@ describe('typeScriptExtractor', () => {
     expect(getUser!.returnType!.text).toContain('User')
   })
 
-  it('extracts enums with variants', async () => {
-    const symbols = await extractor.extract({
-      files: [resolve(FIXTURES, 'types.ts')],
-      root: FIXTURES,
-      config: undefined,
-    })
-
+  it('extracts enums with variants', () => {
     const status = symbols.find(s => s.name === 'Status')
     expect(status).toBeDefined()
     expect(status!.kind).toBe('enum')
@@ -113,13 +94,7 @@ describe('typeScriptExtractor', () => {
     expect(ok!.doc.summary).toBe('Everything is fine.')
   })
 
-  it('extracts TSDoc summary and examples', async () => {
-    const symbols = await extractor.extract({
-      files: [resolve(FIXTURES, 'types.ts')],
-      root: FIXTURES,
-      config: undefined,
-    })
-
+  it('extracts TSDoc summary and examples', () => {
     const user = symbols.find(s => s.name === 'User')!
     expect(user.doc.summary).toBe('A sample user.')
     expect(user.doc.examples).toHaveLength(1)
@@ -127,38 +102,24 @@ describe('typeScriptExtractor', () => {
     expect(user.doc.examples[0]!.code).toContain('const u: User')
   })
 
-  it('extracts all expected symbols from fixture', async () => {
-    const symbols = await extractor.extract({
-      files: [resolve(FIXTURES, 'types.ts')],
-      root: FIXTURES,
-      config: undefined,
-    })
-
+  it('extracts all expected symbols from fixture', () => {
     const names = symbols.map(s => s.name).sort()
     expect(names).toEqual(['MAX_PAGE_SIZE', 'Role', 'Status', 'User', 'VERSION', 'getUser'])
   })
 
   it('returns empty array for empty input', async () => {
-    const symbols = await extractor.extract({
+    const empty = await extractor.extract({
       files: [],
       root: FIXTURES,
       config: undefined,
     })
-    expect(symbols).toEqual([])
+    expect(empty).toEqual([])
   })
 
-  it('builds cross-file typeRefs via knownNames', async () => {
-    const symbols = await extractor.extract({
-      files: [resolve(FIXTURES, 'types.ts')],
-      root: FIXTURES,
-      config: undefined,
-    })
-
-    // getUser returns User | null — the return type should reference User
+  it('builds cross-file typeRefs via knownNames', () => {
     const getUser = symbols.find(s => s.name === 'getUser')!
     expect(getUser.returnType).toBeDefined()
     expect(getUser.returnType!.text).toContain('User')
-    // typeRefs should have an entry for the User reference
     expect(getUser.returnType!.refs.length).toBeGreaterThanOrEqual(1)
     expect(getUser.returnType!.refs[0]!.symbolId).toBe('ts:types.ts#User')
   })

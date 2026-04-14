@@ -75,11 +75,6 @@ function normalize(s: string): string {
     .trim()
 }
 
-// Each test spins up two full `ts.Program`s (one for our extractor, one for
-// the `program.emit` oracle), so default 5s timeout is tight — especially
-// under v8 coverage instrumentation on CI.
-const TIMEOUT_MS = 30_000
-
 describe('canonical signature contract', () => {
   const extractor = new TypeScriptExtractor()
 
@@ -111,7 +106,7 @@ describe('canonical signature contract', () => {
     }
 
     expect(checked).toEqual(expect.arrayContaining(['User', 'Role', 'Status', 'getUser']))
-  }, TIMEOUT_MS)
+  })
 
   it('matches `tsc --declaration` for class headers and member names', async () => {
     // Class bodies have additional known divergences we don't normalize out:
@@ -139,7 +134,7 @@ describe('canonical signature contract', () => {
       expect(memberNames(sym.signature), `member-name drift for ${sym.name}`)
         .toEqual(memberNames(expected!))
     }
-  }, TIMEOUT_MS)
+  })
 })
 
 function classHeader(decl: string): string {
