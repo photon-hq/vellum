@@ -12,6 +12,7 @@ const FILTER_DOCS: Record<string, string> = {
   typeCard: 'Renders a full card: signature + docs + examples — profile-dependent.',
   typeString: 'Renders a `TypeString` object as inline code — profile-dependent.',
   declaration: 'Returns the canonical declaration text for a symbol (printer-normalized, JSDoc stripped). Equivalent to `sym.signature`.',
+  cell: 'Produce a markdown-table-cell-safe rendering. Accepts a `TypeString`, string, or null. Collapses whitespace, escapes `|`, wraps in a code span — profile-routed.',
   example: 'Returns the nth `@example` code block. Usage: `sym | example(0)`.',
   summary: 'Extracts the doc summary from a Symbol or DocComment.',
   safe: 'Marks the string as HTML-safe (Nunjucks built-in).',

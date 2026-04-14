@@ -161,6 +161,7 @@ between authors and host-specific output.
 {{ sym | typeRef | safe }}         {# inline name, tooltip if profile supports it #}
 {{ sym | typeCard | safe }}        {# full card: signature + docs + examples #}
 {{ ts  | typeString | safe }}      {# render a TypeString inline #}
+{{ val | cell | safe }}            {# markdown-table-cell-safe; TypeString or string #}
 
 {# Plain — no profile involvement, returns raw strings #}
 {{ sym | declaration }}            {# canonical declaration text (alias for sym.signature) #}
@@ -170,7 +171,18 @@ between authors and host-specific output.
 
 Use `declaration` (or `sym.signature`) when you need the raw declaration
 string to drop into a fenced block, JSX prop, tooltip, or table cell. Use
-`signature` when you want the profile to decide the fence/formatting.
+`signature` when you want the profile to decide the fence/formatting. Use
+`cell` for any value you're dropping into a markdown table cell — it
+collapses whitespace, escapes column separators (`|`), wraps in a code
+span, and accepts either a `TypeString` (pulling `.oneline ?? .text`) or
+a plain string like `sym.doc.summary`:
+
+```njk
+| `{{ m.name }}` | {{ m.type | cell | safe }} | {{ m.doc.summary | cell | safe }} |
+```
+
+Without `cell`, multi-line pretty-printed unions and summaries with `|`
+or newlines break the surrounding table syntax.
 
 ### Built-in partials
 
@@ -207,7 +219,7 @@ sym.doc.deprecated         { reason } | null
 sym.doc.customTags         { "@tagName": ["value"] }
 sym.members[]              interface/class fields (each has .name, .type, .doc, ...)
 sym.parameters[]           function params (each has .name, .type, .optional, .doc)
-sym.returnType             { text, refs[] }
+sym.returnType             { text, refs[], oneline? }  // oneline: single-line form for cells/tooltips, present when text spans multiple lines
 sym.variants[]             enum members. Each variant is `{ name, value, doc, fields? }` — `fields[]` populated for discriminated-union arms and language-native enums with payloads. Also populated for the `as const` enum pattern — see below.
 sym.discriminator          tagged-union discriminator property name (TS) — unset for enums where the variant name itself is the tag.
 sym.value                  const value ({ text, kind })

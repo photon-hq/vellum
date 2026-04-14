@@ -18,6 +18,23 @@ export function buildFilters(ctx: TemplateContext) {
      */
     declaration: (sym: Symbol) => sym.signature,
 
+    /**
+     * Produce a markdown-table-cell-safe rendering of whatever was passed
+     * in. Accepts a `TypeString` (uses `.oneline ?? .text`), a plain
+     * string, or null/undefined (→ empty). Collapses whitespace runs
+     * as a defence-in-depth, then routes through the profile's `cell`
+     * method for the final wrapping/escaping.
+     */
+    cell: (value: TypeString | string | null | undefined) => {
+      if (value == null)
+        return ''
+      const raw = typeof value === 'string'
+        ? value
+        : (value.oneline ?? value.text)
+      const oneLine = raw.replace(/\s+/g, ' ').trim()
+      return ctx.profile.cell(oneLine, renderCtx)
+    },
+
     /** Return the nth @example code block, or empty string. */
     example: (sym: Symbol, n: number = 0) => {
       const ex = sym.doc.examples[n]

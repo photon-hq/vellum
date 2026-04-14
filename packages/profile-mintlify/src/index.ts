@@ -10,6 +10,7 @@ const RE_BACKSLASH = /\\/g
 const RE_DOUBLE_QUOTE = /"/g
 const RE_NEWLINES = /\n+/g
 const RE_WHITESPACE_RUNS = /\s+/g
+const RE_PIPE = /\|/g
 
 function codeFence(lang: string, body: string): string {
   return `\`\`\`${lang}\n${body.replace(RE_TRAILING_WHITESPACE, '')}\n\`\`\``
@@ -65,5 +66,11 @@ export class MintlifyProfile implements RendererProfile {
 
   link(sym: Symbol, _ctx: RenderContext): string {
     return `\`${sym.name}\``
+  }
+
+  cell(value: string, _ctx: RenderContext): string {
+    // Wrapping in a code span makes `<>` literal under MDX; the only
+    // cell-specific escape left is the column separator.
+    return `\`${value.replace(RE_PIPE, '\\|')}\``
   }
 }

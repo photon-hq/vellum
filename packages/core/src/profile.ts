@@ -24,6 +24,13 @@ export interface RendererProfile {
   /** A link to the docs page for a symbol, by name. */
   link: (sym: Symbol, ctx: RenderContext) => string
 
+  /**
+   * Produce a single-line, cell-safe string for insertion in a markdown
+   * table cell. Wraps the value in a code span and escapes column
+   * separators. Input is assumed to be already collapsed to one line.
+   */
+  cell: (value: string, ctx: RenderContext) => string
+
   /** Post-processing applied to the final template output (optional). */
   postProcess?: (output: string) => string
 }

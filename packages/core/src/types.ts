@@ -33,6 +33,13 @@ export interface TypeRef {
 
 export interface TypeString {
   text: string
+  /**
+   * Single-line form suitable for table cells, tooltips, and inline
+   * annotations where `text` (which may be pretty-printed across several
+   * lines for pretty-printed unions) would break the surrounding syntax.
+   * Optional — extractors may omit when it would equal `text`.
+   */
+  oneline?: string
   refs: TypeRef[]
 }
 

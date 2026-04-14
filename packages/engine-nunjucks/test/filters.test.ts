@@ -102,6 +102,45 @@ describe('filters', () => {
     expect(result).toBe('[]')
   })
 
+  it('cell: TypeString with oneline uses oneline', async () => {
+    const result = await engine.render(
+      '{{ { text: "A\\n  | B", oneline: "A | B", refs: [] } | cell | safe }}',
+      makeContext([]),
+    )
+    expect(result).toBe('`A \\| B`')
+  })
+
+  it('cell: TypeString without oneline falls back to text (collapsed)', async () => {
+    const result = await engine.render(
+      '{{ { text: "A\\n  | B", refs: [] } | cell | safe }}',
+      makeContext([]),
+    )
+    expect(result).toBe('`A \\| B`')
+  })
+
+  it('cell: plain string is escaped and wrapped', async () => {
+    const result = await engine.render(
+      '{{ "Array<string> | null" | cell | safe }}',
+      makeContext([]),
+    )
+    expect(result).toBe('`Array<string> \\| null`')
+  })
+
+  it('cell: collapses multi-line input', async () => {
+    const result = await engine.render(
+      '{{ "line one\\n    line two\\n    line three" | cell | safe }}',
+      makeContext([]),
+    )
+    expect(result).toBe('`line one line two line three`')
+  })
+
+  it('cell: null and undefined render as empty', async () => {
+    const nullRes = await engine.render('[{{ null | cell | safe }}]', makeContext([]))
+    expect(nullRes).toBe('[]')
+    const undefRes = await engine.render('[{{ nope | cell | safe }}]', makeContext([]))
+    expect(undefRes).toBe('[]')
+  })
+
   it('declaration returns the canonical signature populated by the extractor', async () => {
     const canonical = `interface SendReceipt {
     readonly guid: MessageGuid;

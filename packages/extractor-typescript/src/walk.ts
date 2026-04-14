@@ -27,6 +27,7 @@ const RE_STRING_LITERAL = /^".*"$|^'.*'$|^`.*`$/
 const RE_NUMBER_LITERAL = /^-?\d+(?:\.\d+)?$/
 const RE_TRAILING_SEMI = /;$/
 const RE_LEADING_AT = /^@/
+const RE_WHITESPACE_RUNS = /\s+/g
 
 interface WalkContext {
   checker: ts.TypeChecker
@@ -95,7 +96,15 @@ function typeStringFrom(typeNode: ts.TypeNode | undefined, ctx: WalkContext): Ty
   }
   visit(typeNode)
 
-  return { text, refs }
+  // `oneline`: `text` with whitespace runs collapsed, for cells/tooltips.
+  // Omit when equal to `text` to save bytes in the cache for the common
+  // single-line case. `refs` offsets are into `text`, not `oneline`.
+  const collapsed = text.replace(RE_WHITESPACE_RUNS, ' ').trim()
+  return {
+    text,
+    refs,
+    ...(collapsed !== text ? { oneline: collapsed } : {}),
+  }
 }
 
 function extractParameter(param: ts.ParameterDeclaration, ctx: WalkContext, paramDocs: Record<string, string>): Parameter {

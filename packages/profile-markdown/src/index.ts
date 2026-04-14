@@ -6,6 +6,7 @@ import type {
 } from '@vellum-docs/core'
 
 const RE_TRAILING_WHITESPACE = /\s*$/
+const RE_PIPE = /\|/g
 
 function codeFence(lang: string, body: string): string {
   return `\`\`\`${lang}\n${body.replace(RE_TRAILING_WHITESPACE, '')}\n\`\`\``
@@ -44,5 +45,11 @@ export class MarkdownProfile implements RendererProfile {
 
   link(sym: Symbol, _ctx: RenderContext): string {
     return `\`${sym.name}\``
+  }
+
+  cell(value: string, _ctx: RenderContext): string {
+    // Inside a code span `<>` is literal, so the only cell-specific
+    // escape left is the column separator.
+    return `\`${value.replace(RE_PIPE, '\\|')}\``
   }
 }

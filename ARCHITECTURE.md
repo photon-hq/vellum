@@ -161,6 +161,7 @@ Shipped filters:
 {{ sym | link }}            render name as a link to its docs page (profile-routed)
 {{ sym | signature }}       signature as a code fence, typeRefs linkified (profile-routed)
 {{ sym | declaration }}     raw canonical declaration text (alias for sym.signature)
+{{ val | cell }}            markdown-table-cell-safe rendering (profile-routed)
 {{ str | tsdoc }}           markdown-safe tsdoc rendering
 {{ sym | example(0) }}      nth @example block
 ```
@@ -309,6 +310,9 @@ interface Example {
 
 interface TypeString {
   text: string // pretty-printed type, source syntax
+  oneline?: string // whitespace-collapsed form for cells/tooltips;
+                   // omitted when equal to `text`. `refs` offsets are
+                   // into `text`, not `oneline`.
   refs: TypeRef[] // positions linking to known SymbolIds
 }
 

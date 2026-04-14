@@ -36,6 +36,7 @@ const FILTER_NAMES = [
   { name: 'typeCard', detail: 'Render full card: signature + docs + examples' },
   { name: 'typeString', detail: 'Render a TypeString inline' },
   { name: 'declaration', detail: 'Canonical declaration text (alias for .signature)' },
+  { name: 'cell', detail: 'Cell-safe rendering for markdown table cells' },
   { name: 'example', detail: 'Get nth @example code block' },
   { name: 'summary', detail: 'Get doc summary text' },
   { name: 'safe', detail: 'Mark as HTML-safe (Nunjucks built-in)' },
@@ -128,6 +129,7 @@ function getPropertyCompletions(varType: string, chain: string): CompletionItem[
   else if (chain === '.returnType.' || chain === '.type.' || chain === '.valueType.' || chain === '.aliasOf.') {
     props = [
       { name: 'text', detail: 'string' },
+      { name: 'oneline', detail: 'string | undefined (single-line form)' },
       { name: 'refs', detail: 'TypeRef[]' },
     ]
   }
