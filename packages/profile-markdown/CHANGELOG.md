@@ -1,5 +1,11 @@
 # @vellum-docs/profile-markdown
 
+## 0.2.2
+
+### Patch Changes
+
+- @vellum-docs/core@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes
