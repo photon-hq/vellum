@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import process from 'node:process'
 import { runBuild } from './build'
+import { runWatch } from './watch'
 
 const args = process.argv.slice(2)
 const command = args[0]
@@ -20,7 +21,7 @@ function printHelp(): void {
   console.log(`vellum - documentation preprocessor
 
 Usage:
-  vellum build [--config <path>] [--cwd <path>] [--no-strict]
+  vellum build [--watch] [--config <path>] [--cwd <path>] [--no-strict]
   vellum help
 
 Commands:
@@ -28,6 +29,9 @@ Commands:
   help     Show this help.
 
 Flags:
+  --watch           Watch source files, templates, and config. On change,
+                    re-extract affected symbols and re-render only the
+                    templates whose recorded reads touched the change.
   --config <path>   Config file path (default: auto-discover vellum.config.{ts,mts,js,mjs}).
   --cwd <path>      Working directory (default: process.cwd()).
   --no-strict       Disable strict template rendering. By default, a template
@@ -46,6 +50,10 @@ async function main(): Promise<void> {
     const cwd = parseFlag('--cwd') ?? process.cwd()
     const configPath = parseFlag('--config')
     const strict = !hasFlag('--no-strict')
+    if (hasFlag('--watch')) {
+      await runWatch({ cwd, configPath, strict })
+      return
+    }
     await runBuild({ cwd, configPath, strict })
     return
   }
@@ -55,7 +63,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error('vellum: build failed')
+  console.error('vellum: command failed')
   console.error(err)
   process.exit(1)
 })

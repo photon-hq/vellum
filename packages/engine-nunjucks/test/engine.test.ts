@@ -1,6 +1,6 @@
 import type { Symbol } from '../../core/src'
 import { describe, expect, it } from 'vitest'
-import { emptyDocComment, InMemorySymbolIndex } from '../../core/src'
+import { createTemplateReads, emptyDocComment, InMemorySymbolIndex } from '../../core/src'
 import { MarkdownProfile } from '../../profile-markdown/src'
 import { NunjucksEngine } from '../src'
 
@@ -34,7 +34,7 @@ describe('nunjucksEngine', () => {
   const engine = new NunjucksEngine()
 
   it('renders plain text without directives', async () => {
-    const result = await engine.render('Hello world', makeContext([]))
+    const { output: result } = await engine.render('Hello world', makeContext([]))
     expect(result).toBe('Hello world')
   })
 
@@ -44,7 +44,7 @@ describe('nunjucksEngine', () => {
       name: 'User',
       doc: { ...emptyDocComment(), summary: 'A user.' },
     })
-    const result = await engine.render(
+    const { output: result } = await engine.render(
       '{% set t = symbol("ts:src/types.ts#User") %}{{ t.name }}: {{ t.doc.summary }}',
       makeContext([sym]),
     )
@@ -57,7 +57,7 @@ describe('nunjucksEngine', () => {
       makeSym({ id: 'ts:m#B', name: 'B', kind: 'const', module: 'm' }),
       makeSym({ id: 'ts:m#C', name: 'C', kind: 'function', module: 'm' }),
     ]
-    const result = await engine.render(
+    const { output: result } = await engine.render(
       '{% for s in symbols({ module: "m", kind: "const" }) %}{{ s.name }},{% endfor %}',
       makeContext(syms),
     )
@@ -69,7 +69,7 @@ describe('nunjucksEngine', () => {
       makeSym({ id: 'ts:m#A', name: 'A', module: 'm', exported: true }),
       makeSym({ id: 'ts:m#B', name: 'B', module: 'm', exported: false }),
     ]
-    const result = await engine.render(
+    const { output: result } = await engine.render(
       '{% set mod = module("m") %}{{ mod.exports | length }}',
       makeContext(syms),
     )
@@ -82,7 +82,7 @@ describe('nunjucksEngine', () => {
       name: 'User',
       signature: 'interface User { id: string }',
     })
-    const result = await engine.render(
+    const { output: result } = await engine.render(
       '{% set t = symbol("ts:m#User") %}{{ t | signature | safe }}',
       makeContext([sym]),
     )
@@ -96,7 +96,7 @@ describe('nunjucksEngine', () => {
       name: 'User',
       doc: { ...emptyDocComment(), summary: 'A user record.' },
     })
-    const result = await engine.render(
+    const { output: result } = await engine.render(
       '{% set t = symbol("ts:m#User") %}{{ t | summary }}',
       makeContext([sym]),
     )
@@ -112,7 +112,7 @@ describe('nunjucksEngine', () => {
         examples: [{ title: null, lang: 'ts', code: 'const u = new User()', description: null }],
       },
     })
-    const result = await engine.render(
+    const { output: result } = await engine.render(
       '{% set t = symbol("ts:m#User") %}{{ t | example(0) }}',
       makeContext([sym]),
     )
@@ -130,7 +130,7 @@ describe('nunjucksEngine', () => {
 
   it('lenient mode renders missing symbols as empty', async () => {
     const lenient = new NunjucksEngine({ strict: false })
-    const result = await lenient.render(
+    const { output: result } = await lenient.render(
       '{% set t = symbol("ts:m#Missing") %}{{ t }}',
       makeContext([]),
     )
@@ -144,7 +144,7 @@ describe('nunjucksEngine', () => {
     ]
     const template = `{% for c in symbols({ module: "m", kind: "const" }) %}| {{ c.name }} | {{ c.value.text }} |
 {% endfor %}`
-    const result = await engine.render(template, makeContext(syms))
+    const { output: result } = await engine.render(template, makeContext(syms))
     expect(result).toContain('| Alpha | 1 |')
     expect(result).toContain('| Beta | 2 |')
   })
@@ -168,7 +168,26 @@ describe('nunjucksEngine', () => {
       ],
     })
     const template = `{% set t = symbol("ts:m#User") %}{% if t.members %}has {{ t.members | length }} members{% endif %}`
-    const result = await engine.render(template, makeContext([sym]))
+    const { output: result } = await engine.render(template, makeContext([sym]))
     expect(result).toBe('has 1 members')
+  })
+
+  it('populates TemplateReads when ctx.reads is provided', async () => {
+    const syms = [
+      makeSym({ id: 'ts:m#A', name: 'A', kind: 'const', module: 'm' }),
+      makeSym({ id: 'ts:m#B', name: 'B', kind: 'const', module: 'm' }),
+    ]
+    const reads = createTemplateReads()
+    const template = `{% set t = symbol("ts:m#A") %}{% for s in symbols({ module: "m", kind: "const" }) %}{{ s.name }},{% endfor %}{% set mod = module("m") %}{{ mod.exports | length }}`
+    const { reads: returned } = await engine.render(template, {
+      ...makeContext(syms),
+      reads,
+    })
+    expect(returned).toBe(reads)
+    expect([...reads.ids]).toEqual(['ts:m#A'])
+    expect([...reads.modules]).toEqual(['m'])
+    expect(reads.queries).toHaveLength(1)
+    expect(reads.queries[0]).toEqual({ module: 'm', kind: 'const' })
+    expect([...reads.queryResultIds].sort()).toEqual(['ts:m#A', 'ts:m#B'])
   })
 })

@@ -1,3 +1,5 @@
 export { runBuild } from './build'
 export type { BuildCommandOptions } from './build'
 export { findConfig, loadConfig } from './config'
+export { runWatch } from './watch'
+export type { WatchCommandOptions } from './watch'

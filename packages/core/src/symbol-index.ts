@@ -17,6 +17,17 @@ export interface SymbolIndex {
   module: (path: string) => Module | null
   all: () => Symbol[]
   clear: () => void
+  /**
+   * All symbols that were added from a given source file (matched by
+   * `Symbol.source.file`, which extractors normalize to a forward-slash
+   * path relative to the project root).
+   */
+  symbolsByFile: (file: string) => Symbol[]
+  /**
+   * Remove every symbol previously added from a given source file.
+   * Returns the removed ids.
+   */
+  removeByFile: (file: string) => SymbolId[]
 }
 
 function globToRegex(glob: string): RegExp {
@@ -50,9 +61,41 @@ function globToRegex(glob: string): RegExp {
   return new RegExp(`^${src}$`)
 }
 
+/**
+ * Predicate equivalent to `InMemorySymbolIndex.symbols(query)` applied to a
+ * single symbol. Exported so dev-mode invalidation can reuse the exact same
+ * match semantics when deciding whether a newly-added symbol satisfies a
+ * previously-recorded template query.
+ */
+export function matchesQuery(sym: Symbol, query: SymbolQuery = {}): boolean {
+  const exportedOnly = query.exportedOnly ?? true
+  if (exportedOnly && !sym.exported)
+    return false
+  if (query.language && sym.language !== query.language)
+    return false
+  if (query.kind) {
+    const kinds = Array.isArray(query.kind) ? query.kind : [query.kind]
+    if (!kinds.includes(sym.kind))
+      return false
+  }
+  if (query.module) {
+    const re = globToRegex(query.module)
+    if (!re.test(sym.module))
+      return false
+  }
+  if (query.tag && !sym.tags.includes(query.tag))
+    return false
+  if (query.customTag && !(query.customTag in sym.doc.customTags))
+    return false
+  if (query.prefix && !sym.name.startsWith(query.prefix))
+    return false
+  return true
+}
+
 export class InMemorySymbolIndex implements SymbolIndex {
   private byId = new Map<SymbolId, Symbol>()
   private byModule = new Map<string, Symbol[]>()
+  private byFile = new Map<string, Set<SymbolId>>()
 
   add(symbols: Symbol[]): void {
     for (const s of symbols) {
@@ -60,6 +103,11 @@ export class InMemorySymbolIndex implements SymbolIndex {
       const list = this.byModule.get(s.module) ?? []
       list.push(s)
       this.byModule.set(s.module, list)
+
+      const file = s.source.file
+      const ids = this.byFile.get(file) ?? new Set<SymbolId>()
+      ids.add(s.id)
+      this.byFile.set(file, ids)
     }
   }
 
@@ -68,31 +116,10 @@ export class InMemorySymbolIndex implements SymbolIndex {
   }
 
   symbols(query: SymbolQuery = {}): Symbol[] {
-    const kinds = query.kind
-      ? Array.isArray(query.kind)
-        ? new Set(query.kind)
-        : new Set([query.kind])
-      : null
-    const exportedOnly = query.exportedOnly ?? true
-    const moduleRe = query.module ? globToRegex(query.module) : null
-
     const results: Symbol[] = []
     for (const s of this.byId.values()) {
-      if (exportedOnly && !s.exported)
-        continue
-      if (query.language && s.language !== query.language)
-        continue
-      if (kinds && !kinds.has(s.kind))
-        continue
-      if (moduleRe && !moduleRe.test(s.module))
-        continue
-      if (query.tag && !s.tags.includes(query.tag))
-        continue
-      if (query.customTag && !(query.customTag in s.doc.customTags))
-        continue
-      if (query.prefix && !s.name.startsWith(query.prefix))
-        continue
-      results.push(s)
+      if (matchesQuery(s, query))
+        results.push(s)
     }
     results.sort((a, b) => a.name.localeCompare(b.name))
     return results
@@ -112,5 +139,43 @@ export class InMemorySymbolIndex implements SymbolIndex {
   clear(): void {
     this.byId.clear()
     this.byModule.clear()
+    this.byFile.clear()
+  }
+
+  symbolsByFile(file: string): Symbol[] {
+    const ids = this.byFile.get(file)
+    if (!ids)
+      return []
+    const out: Symbol[] = []
+    for (const id of ids) {
+      const s = this.byId.get(id)
+      if (s)
+        out.push(s)
+    }
+    return out
+  }
+
+  removeByFile(file: string): SymbolId[] {
+    const ids = this.byFile.get(file)
+    if (!ids)
+      return []
+    const removed: SymbolId[] = []
+    for (const id of ids) {
+      const s = this.byId.get(id)
+      if (!s)
+        continue
+      this.byId.delete(id)
+      const modList = this.byModule.get(s.module)
+      if (modList) {
+        const filtered = modList.filter(m => m.id !== id)
+        if (filtered.length === 0)
+          this.byModule.delete(s.module)
+        else
+          this.byModule.set(s.module, filtered)
+      }
+      removed.push(id)
+    }
+    this.byFile.delete(file)
+    return removed
   }
 }

@@ -1,4 +1,5 @@
 import type { Cache } from './cache'
+import type { TemplateReads } from './dev/reads'
 import type { TemplateEngine } from './engine'
 import type { Extractor, PackageFile } from './extractor'
 import type { RendererProfile } from './profile'
@@ -72,103 +73,144 @@ export class Vellum {
   }
 
   async extractAll(): Promise<number> {
-    const root = resolve(this.config.root)
     let count = 0
-
     for (const extractor of this.config.extractors) {
-      const langConfig = this.config.sources[extractor.language]
-      if (!langConfig)
-        continue
+      const symbols = await this.extractLanguage(extractor)
+      count += symbols.length
+    }
+    return count
+  }
 
-      const files = await this.resolveFiles(root, langConfig.include, extractor.extensions)
+  /**
+   * Re-extract a single language and add the results to the index. Returns
+   * the full list of symbols produced (cache hits + fresh extractions).
+   * Used by both `extractAll` and the watch-mode incremental loop. The
+   * extractor is looked up either by a passed-in instance or by language key.
+   */
+  async extractLanguage(
+    extractorOrLang: Extractor | string,
+  ): Promise<import('./types.js').Symbol[]> {
+    const extractor = typeof extractorOrLang === 'string'
+      ? this.config.extractors.find(e => e.language === extractorOrLang)
+      : extractorOrLang
+    if (!extractor)
+      return []
 
-      // Resolve package specifiers to their .d.ts entry points.
-      const packageFiles = this.resolvePackages(root, langConfig.packages ?? [], extractor.extensions)
+    const root = resolve(this.config.root)
+    const langConfig = this.config.sources[extractor.language]
+    if (!langConfig)
+      return []
 
-      const fresh: string[] = []
-      const cachedSymbols: import('./types.js').Symbol[] = []
+    const files = await this.resolveFiles(root, langConfig.include, extractor.extensions)
+    const packageFiles = this.resolvePackages(root, langConfig.packages ?? [], extractor.extensions)
 
-      for (const file of files) {
-        const hash = await hashFile(file)
-        const entry = await this.cache.get({
-          language: extractor.language,
-          file,
-          hash,
-        })
-        if (entry) {
-          cachedSymbols.push(...entry.symbols)
-        }
-        else {
-          fresh.push(file)
-        }
-      }
+    const fresh: string[] = []
+    const cachedSymbols: import('./types.js').Symbol[] = []
 
-      let extracted: import('./types.js').Symbol[] = []
-      const hasWork = fresh.length > 0 || packageFiles.length > 0
-      if (hasWork) {
-        extracted = await extractor.extract({
-          files: fresh,
-          root,
-          config: this.config.extractorConfig?.[extractor.language],
-          packageFiles: packageFiles.length > 0 ? packageFiles : undefined,
-        })
-
-        // Re-bin extracted symbols back into per-file cache entries.
-        const byFile = new Map<string, import('./types.js').Symbol[]>()
-        for (const s of extracted) {
-          const abs = resolve(root, s.source.file)
-          const list = byFile.get(abs) ?? []
-          list.push(s)
-          byFile.set(abs, list)
-        }
-        for (const file of fresh) {
-          const hash = await hashFile(file)
-          await this.cache.set({
-            key: { language: extractor.language, file, hash },
-            symbols: byFile.get(file) ?? [],
-          })
-        }
-      }
-
-      const all = [...cachedSymbols, ...extracted]
-      this.index.add(all)
-      count += all.length
+    for (const file of files) {
+      const hash = await hashFile(file)
+      const entry = await this.cache.get({
+        language: extractor.language,
+        file,
+        hash,
+      })
+      if (entry)
+        cachedSymbols.push(...entry.symbols)
+      else
+        fresh.push(file)
     }
 
-    return count
+    let extracted: import('./types.js').Symbol[] = []
+    const hasWork = fresh.length > 0 || packageFiles.length > 0
+    if (hasWork) {
+      extracted = await extractor.extract({
+        files: fresh,
+        root,
+        config: this.config.extractorConfig?.[extractor.language],
+        packageFiles: packageFiles.length > 0 ? packageFiles : undefined,
+      })
+
+      const byFile = new Map<string, import('./types.js').Symbol[]>()
+      for (const s of extracted) {
+        const abs = resolve(root, s.source.file)
+        const list = byFile.get(abs) ?? []
+        list.push(s)
+        byFile.set(abs, list)
+      }
+      for (const file of fresh) {
+        const hash = await hashFile(file)
+        await this.cache.set({
+          key: { language: extractor.language, file, hash },
+          symbols: byFile.get(file) ?? [],
+        })
+      }
+    }
+
+    const all = [...cachedSymbols, ...extracted]
+    this.index.add(all)
+    return all
   }
 
   async renderTemplates(): Promise<string[]> {
     const root = resolve(this.config.root)
     const templateRoot = resolve(root, this.config.templates)
-    const outRoot = resolve(root, this.config.outDir)
-
     const ext = this.config.engine.sourceExtension
     const files = await this.walkFiles(templateRoot, name => name.endsWith(ext))
     const written: string[] = []
 
     for (const file of files) {
-      const source = await readFile(file, 'utf8')
-      const output = await this.config.engine.render(source, {
-        index: this.index,
-        profile: this.config.profile,
-        sourceFile: file,
-      })
-
-      const rel = relative(templateRoot, file)
-      // strip trailing ".vel" from e.g. "foo.mdx.vel" → "foo.mdx"
-      const outRel = rel.slice(0, -ext.length)
-      const outPath = join(outRoot, outRel)
-
-      await mkdir(dirname(outPath), { recursive: true })
-      const finalOutput = this.config.profile.postProcess
-        ? this.config.profile.postProcess(output)
-        : output
-      await writeFile(outPath, finalOutput, 'utf8')
+      const { outPath } = await this.renderTemplate(file)
       written.push(outPath)
     }
 
     return written
+  }
+
+  /**
+   * List every `.vel` template under `config.templates`. Absolute paths,
+   * sorted. Exposed for watch mode, which needs to prime the dependency
+   * graph before the first file change arrives.
+   */
+  async listTemplates(): Promise<string[]> {
+    const root = resolve(this.config.root)
+    const templateRoot = resolve(root, this.config.templates)
+    const ext = this.config.engine.sourceExtension
+    return this.walkFiles(templateRoot, name => name.endsWith(ext))
+  }
+
+  /**
+   * Render a single `.vel` template to disk. Returns the absolute output
+   * path and the `TemplateReads` captured during render (only populated
+   * when a `reads` argument is passed, so callers outside watch mode are
+   * unaffected).
+   */
+  async renderTemplate(
+    file: string,
+    reads?: TemplateReads,
+  ): Promise<{ outPath: string, reads?: TemplateReads }> {
+    const root = resolve(this.config.root)
+    const templateRoot = resolve(root, this.config.templates)
+    const outRoot = resolve(root, this.config.outDir)
+    const ext = this.config.engine.sourceExtension
+
+    const source = await readFile(file, 'utf8')
+    const result = await this.config.engine.render(source, {
+      index: this.index,
+      profile: this.config.profile,
+      sourceFile: file,
+      reads,
+    })
+
+    const rel = relative(templateRoot, file)
+    const outRel = rel.slice(0, -ext.length)
+    const outPath = join(outRoot, outRel)
+
+    await mkdir(dirname(outPath), { recursive: true })
+    const finalOutput = this.config.profile.postProcess
+      ? this.config.profile.postProcess(result.output)
+      : result.output
+    await writeFile(outPath, finalOutput, 'utf8')
+    return { outPath, reads: result.reads }
   }
 
   async build(): Promise<BuildResult> {

@@ -1,5 +1,6 @@
 export * from './cache'
 export * from './config'
+export * from './dev'
 export * from './engine'
 export * from './extractor'
 export * from './profile'

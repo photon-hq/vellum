@@ -1,4 +1,4 @@
-import type { TemplateContext, TemplateEngine } from '@vellum-docs/core'
+import type { RenderResult, TemplateContext, TemplateEngine } from '@vellum-docs/core'
 import { dirname, resolve } from 'node:path'
 
 import { fileURLToPath } from 'node:url'
@@ -52,7 +52,7 @@ export class NunjucksEngine implements TemplateEngine {
     this.strict = opts.strict ?? true
   }
 
-  async render(source: string, ctx: TemplateContext): Promise<string> {
+  async render(source: string, ctx: TemplateContext): Promise<RenderResult> {
     const env = new nunjucks.Environment(
       new nunjucks.FileSystemLoader(this.searchPaths, {
         noCache: true,
@@ -82,12 +82,13 @@ export class NunjucksEngine implements TemplateEngine {
     for (const [k, v] of Object.entries(filters)) env.addFilter(k, v)
     for (const [k, v] of Object.entries(this.extraFilters)) env.addFilter(k, v)
 
-    return new Promise<string>((resolvePromise, reject) => {
+    const output = await new Promise<string>((resolvePromise, reject) => {
       env.renderString(source, {}, (err, result) => {
         if (err)
           reject(err)
         else resolvePromise(result ?? '')
       })
     })
+    return ctx.reads ? { output, reads: ctx.reads } : { output }
   }
 }
