@@ -23,6 +23,7 @@ import {
 } from '@vellum-docs/core'
 import chokidar from 'chokidar'
 import { findConfig, loadConfig } from './config'
+import { logger } from './logger'
 
 export interface WatchCommandOptions {
   cwd: string
@@ -64,14 +65,14 @@ export async function runWatch(opts: WatchCommandOptions): Promise<void> {
     : findConfig(cwd)
 
   if (!configPath) {
-    console.error(
-      `vellum: no config file found. Looked for vellum.config.{ts,mts,js,mjs} in ${cwd}`,
+    logger.error(
+      `no config file found. Looked for vellum.config.{ts,mts,js,mjs} in ${cwd}`,
     )
     process.exit(1)
   }
 
   await startSession({ configPath, cwd, strict: opts.strict })
-  console.log(`vellum: watching for changes (Ctrl+C to exit)`)
+  logger.info(`watching for changes (Ctrl+C to exit)`)
 
   // Close every watcher still registered regardless of which session
   // generation created it - handles Ctrl+C during a config-reload restart.
@@ -137,19 +138,19 @@ async function startSession(opts: StartOpts): Promise<Session> {
       rendered += 1
     }
     catch (err) {
-      console.error(`vellum: render failed for ${relative(root, tpl)}`)
-      console.error(errorMessage(err))
+      logger.error(`render failed for ${relative(root, tpl)}`)
+      logger.error(errorMessage(err))
     }
   }
   const duration = Date.now() - start
   if (restored && skipped > 0) {
-    console.log(
-      `vellum: primed ${rendered} + skipped ${skipped} templates (${symbolsExtracted} symbols) in ${duration}ms`,
+    logger.success(
+      `primed ${rendered} + skipped ${skipped} templates (${symbolsExtracted} symbols) in ${duration}ms`,
     )
   }
   else {
-    console.log(
-      `vellum: primed ${rendered}/${templates.length} templates (${symbolsExtracted} symbols) in ${duration}ms`,
+    logger.success(
+      `primed ${rendered}/${templates.length} templates (${symbolsExtracted} symbols) in ${duration}ms`,
     )
   }
   void persistSession(sessionFile, graph, root, vellum)
@@ -181,7 +182,7 @@ async function startSession(opts: StartOpts): Promise<Session> {
   ): Promise<void> => {
     const configChanged = events.some(([p]) => p === opts.configPath)
     if (configChanged) {
-      console.log(`vellum: config changed, reloading`)
+      logger.info(`config changed, reloading`)
       activeWatchers.delete(watcher)
       await watcher.close()
       const next = await startSession(opts)
@@ -213,8 +214,8 @@ async function startSession(opts: StartOpts): Promise<Session> {
         byLang.set(e.lang, list)
       }
       const langList = [...byLang.keys()].join(', ')
-      console.log(
-        `vellum: ${sourceEvents.length} source file(s) changed - re-extracting ${langList}...`,
+      logger.info(
+        `${sourceEvents.length} source file(s) changed - re-extracting ${langList}...`,
       )
 
       for (const [lang, list] of byLang) {
@@ -241,8 +242,8 @@ async function startSession(opts: StartOpts): Promise<Session> {
         }
         catch (err) {
           for (const prev of prevByFile.values()) vellum.index.add(prev)
-          console.error(`vellum: extractor '${lang}' failed - keeping previous symbols`)
-          console.error(errorMessage(err))
+          logger.error(`extractor '${lang}' failed - keeping previous symbols`)
+          logger.error(errorMessage(err))
           continue
         }
 
@@ -268,7 +269,7 @@ async function startSession(opts: StartOpts): Promise<Session> {
 
     if (affected.size === 0) {
       if (!isEmptyDiff(diff))
-        console.log(`vellum: symbols changed, no templates affected`)
+        logger.info(`symbols changed, no templates affected`)
       return
     }
 
@@ -282,11 +283,11 @@ async function startSession(opts: StartOpts): Promise<Session> {
         const reads = createTemplateReads()
         const { outPath } = await vellum.renderTemplate(tpl, reads)
         graph.set(tpl, reads)
-        console.log(`vellum: re-rendered ${relative(root, outPath)}`)
+        logger.success(`re-rendered ${relative(root, outPath)}`)
       }
       catch (err) {
-        console.error(`vellum: render failed for ${relative(root, tpl)}`)
-        console.error(errorMessage(err))
+        logger.error(`render failed for ${relative(root, tpl)}`)
+        logger.error(errorMessage(err))
       }
     }
     // Fire-and-forget; errors are logged inside.
@@ -326,7 +327,7 @@ async function startSession(opts: StartOpts): Promise<Session> {
   watcher.on('add', path => schedule(path, 'add'))
   watcher.on('change', path => schedule(path, 'change'))
   watcher.on('unlink', path => schedule(path, 'unlink'))
-  watcher.on('error', err => console.error(`vellum: watcher error`, err))
+  watcher.on('error', err => logger.error(`watcher error`, err))
 
   return currentSession
 }
@@ -575,6 +576,6 @@ async function persistSession(
   }
   catch (err) {
     // Persistence is best-effort; don't let an I/O error crash the watcher.
-    console.error(`vellum: failed to persist watch session: ${errorMessage(err)}`)
+    logger.warn(`failed to persist watch session: ${errorMessage(err)}`)
   }
 }

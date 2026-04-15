@@ -4,6 +4,7 @@ import process from 'node:process'
 import { Vellum } from '@vellum-docs/core'
 
 import { findConfig, loadConfig } from './config'
+import { logger } from './logger'
 
 export interface BuildCommandOptions {
   cwd: string
@@ -24,8 +25,8 @@ export async function runBuild(opts: BuildCommandOptions): Promise<void> {
     : findConfig(cwd)
 
   if (!configPath) {
-    console.error(
-      `vellum: no config file found. Looked for vellum.config.{ts,mts,js,mjs} in ${cwd}`,
+    logger.error(
+      `no config file found. Looked for vellum.config.{ts,mts,js,mjs} in ${cwd}`,
     )
     process.exit(1)
   }
@@ -46,10 +47,10 @@ export async function runBuild(opts: BuildCommandOptions): Promise<void> {
   const result = await vellum.build()
   const duration = Date.now() - start
 
-  console.log(
-    `vellum: extracted ${result.symbolsExtracted} symbols, rendered ${result.templatesRendered} templates in ${duration}ms`,
+  logger.success(
+    `extracted ${result.symbolsExtracted} symbols, rendered ${result.templatesRendered} templates in ${duration}ms`,
   )
   for (const f of result.filesWritten) {
-    console.log(`  → ${relative(cwd, f)}`)
+    logger.log(`  → ${relative(cwd, f)}`)
   }
 }
