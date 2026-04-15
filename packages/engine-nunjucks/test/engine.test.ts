@@ -139,6 +139,34 @@ describe('nunjucksEngine', () => {
     expect(result).toContain('| Beta | 2 |')
   })
 
+  it('does not escape HTML by default', async () => {
+    const sym = makeSym({
+      id: 'ts:m#Widget',
+      name: 'Widget',
+      doc: { ...emptyDocComment(), summary: '<b>Bold</b> text' },
+    })
+    const result = await engine.render(
+      '{% set t = symbol("ts:m#Widget") %}{{ t.doc.summary }}',
+      makeContext([sym]),
+    )
+    expect(result).toBe('<b>Bold</b> text')
+  })
+
+  it('escapes HTML when autoescape is enabled', async () => {
+    const escaped = new NunjucksEngine({ autoescape: true })
+    const sym = makeSym({
+      id: 'ts:m#Widget',
+      name: 'Widget',
+      doc: { ...emptyDocComment(), summary: '<script>alert("xss")</script>' },
+    })
+    const result = await escaped.render(
+      '{% set t = symbol("ts:m#Widget") %}{{ t.doc.summary }}',
+      makeContext([sym]),
+    )
+    expect(result).not.toContain('<script>')
+    expect(result).toContain('&lt;script&gt;')
+  })
+
   it('supports conditional rendering', async () => {
     const sym = makeSym({
       id: 'ts:m#User',

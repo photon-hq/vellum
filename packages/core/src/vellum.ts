@@ -155,9 +155,16 @@ export class Vellum {
             resolvedFile = realpathSync(pf.file)
           }
           catch { /* non-fatal */ }
+          const syms = byFile.get(pf.file) ?? byFile.get(resolvedFile) ?? []
+          if (syms.length === 0) {
+            console.warn(
+              `vellum: caching 0 symbols for package file "${pf.file}"`
+              + ' — the extractor may have returned symbols under a different path',
+            )
+          }
           await this.cache.set({
             key: { language: extractor.language, file: pf.file, hash },
-            symbols: byFile.get(pf.file) ?? byFile.get(resolvedFile) ?? [],
+            symbols: syms,
           })
         }
       }

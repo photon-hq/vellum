@@ -58,77 +58,61 @@ const declarationPrinter = ts.createPrinter({
   omitTrailingSemicolon: false,
 })
 
-// ts.factory.cloneNode exists at runtime since TS 4.0 but isn't in the public
-// type declarations. It creates a shallow copy with pos=-1 / end=-1 which
-// detaches the node from source text, preventing the printer from re-emitting
-// original trivia. This is far more stable than the previously-used private
-// `getSynthesizedDeepClone` API.
-const cloneNode: <T extends ts.Node>(n: T) => T
-  = (ts.factory as unknown as { cloneNode: <T extends ts.Node>(n: T) => T }).cloneNode
-
-/**
- * Combined transform visitor that strips function/method/constructor/accessor
- * bodies and detaches every node from source positions via cloneNode so the
- * printer doesn't re-emit original trivia (JSDoc, etc.).
- */
-function stripBodiesAndDetach(context: ts.TransformationContext): ts.Visitor {
+function stripBodies(context: ts.TransformationContext): ts.Visitor {
   const visit: ts.Visitor = (node) => {
-    // Visit children first so they are detached before the parent.
-    const visited = ts.visitEachChild(node, visit, context)
-    if (ts.isFunctionDeclaration(visited)) {
+    if (ts.isFunctionDeclaration(node)) {
       return ts.factory.updateFunctionDeclaration(
-        visited,
-        visited.modifiers,
-        visited.asteriskToken,
-        visited.name,
-        visited.typeParameters,
-        visited.parameters,
-        visited.type,
+        node,
+        node.modifiers,
+        node.asteriskToken,
+        node.name,
+        node.typeParameters,
+        node.parameters,
+        node.type,
         undefined,
       )
     }
-    if (ts.isMethodDeclaration(visited)) {
+    if (ts.isMethodDeclaration(node)) {
       return ts.factory.updateMethodDeclaration(
-        visited,
-        visited.modifiers,
-        visited.asteriskToken,
-        visited.name,
-        visited.questionToken,
-        visited.typeParameters,
-        visited.parameters,
-        visited.type,
+        node,
+        node.modifiers,
+        node.asteriskToken,
+        node.name,
+        node.questionToken,
+        node.typeParameters,
+        node.parameters,
+        node.type,
         undefined,
       )
     }
-    if (ts.isConstructorDeclaration(visited)) {
+    if (ts.isConstructorDeclaration(node)) {
       return ts.factory.updateConstructorDeclaration(
-        visited,
-        visited.modifiers,
-        visited.parameters,
+        node,
+        node.modifiers,
+        node.parameters,
         undefined,
       )
     }
-    if (ts.isGetAccessor(visited)) {
+    if (ts.isGetAccessor(node)) {
       return ts.factory.updateGetAccessorDeclaration(
-        visited,
-        visited.modifiers,
-        visited.name,
-        visited.parameters,
-        visited.type,
+        node,
+        node.modifiers,
+        node.name,
+        node.parameters,
+        node.type,
         undefined,
       )
     }
-    if (ts.isSetAccessor(visited)) {
+    if (ts.isSetAccessor(node)) {
       return ts.factory.updateSetAccessorDeclaration(
-        visited,
-        visited.modifiers,
-        visited.name,
-        visited.parameters,
+        node,
+        node.modifiers,
+        node.name,
+        node.parameters,
         undefined,
       )
     }
-    // Detach unmodified nodes from source positions.
-    return cloneNode(visited)
+    return ts.visitEachChild(node, visit, context)
   }
   return visit
 }
@@ -137,10 +121,14 @@ export function formatSignature(node: ts.Node, sourceFile: ts.SourceFile): strin
   if (ts.isVariableStatement(node))
     return node.getText(sourceFile).replace(RE_TRAILING_SEMI, '')
 
-  // Strip bodies and detach from source positions in a single transform pass
-  // so leading JSDoc trivia isn't re-emitted by the printer.
-  const result = ts.transform(node, [
-    ctx => n => ts.visitNode(n, stripBodiesAndDetach(ctx)) as ts.Node,
+  // Detach from source positions so leading JSDoc trivia isn't re-emitted by
+  // the printer.
+  const synth = (ts as unknown as {
+    getSynthesizedDeepClone: <T extends ts.Node>(n: T) => T
+  }).getSynthesizedDeepClone(node)
+
+  const result = ts.transform(synth, [
+    ctx => n => ts.visitNode(n, stripBodies(ctx)) as ts.Node,
   ])
   const stripped = result.transformed[0] as ts.Node
   const text = declarationPrinter.printNode(ts.EmitHint.Unspecified, stripped, sourceFile)

@@ -39,34 +39,44 @@ export class NunjucksEngine implements TemplateEngine {
   readonly sourceExtension: string
 
   /**
-   * Shared Nunjucks environment — built once in the constructor so that
-   * N template renders don't recreate N loaders + N environments.
-   * Context-dependent globals/filters are updated in-place before each
-   * render (addGlobal/addFilter replaces by key, so this is safe).
+   * Shared loader — built once so N renders don't create N file-system loaders.
+   * Each render() call creates a lightweight Environment from this loader,
+   * keeping renders reentrant-safe (no shared mutable global/filter state).
    */
-  private readonly env: nunjucks.Environment
+  private readonly loader: nunjucks.ILoader
+  private readonly autoescape: boolean
+  private readonly extraGlobals: Record<string, unknown>
+  private readonly extraFilters: Record<string, (...args: unknown[]) => unknown>
 
   constructor(opts: NunjucksEngineOptions = {}) {
     this.sourceExtension = opts.sourceExtension ?? '.vel'
+    this.autoescape = opts.autoescape ?? false
+    this.extraGlobals = opts.globals ?? {}
+    this.extraFilters = opts.filters ?? {}
 
-    const searchPaths = [builtinPartialsDir, ...(opts.searchPaths ?? [])]
-    this.env = new nunjucks.Environment(
-      new nunjucks.FileSystemLoader(searchPaths, {
-        noCache: true,
-        watch: false,
-      }),
-      {
-        autoescape: opts.autoescape ?? false,
-        throwOnUndefined: false,
-        trimBlocks: false,
-        lstripBlocks: false,
-      },
+    const loader = new nunjucks.FileSystemLoader(
+      [builtinPartialsDir, ...(opts.searchPaths ?? [])],
+      { noCache: true, watch: false },
     )
+    // Each createEnv() call attaches listeners to the shared loader.
+    // Raise the limit to avoid spurious warnings during long builds.
+    if (typeof (loader as unknown as NodeJS.EventEmitter).setMaxListeners === 'function')
+      (loader as unknown as NodeJS.EventEmitter).setMaxListeners(0)
+    this.loader = loader
+  }
+
+  private createEnv(): nunjucks.Environment {
+    const env = new nunjucks.Environment(this.loader, {
+      autoescape: this.autoescape,
+      throwOnUndefined: false,
+      trimBlocks: false,
+      lstripBlocks: false,
+    })
 
     // Path alias: `{% include "@vellum-docs/partials/..." %}` → built-in partials dir.
     type GetTemplateFn = (name: string, ...rest: unknown[]) => unknown
-    const originalGetTemplate = (this.env as unknown as { getTemplate: GetTemplateFn }).getTemplate.bind(this.env);
-    (this.env as unknown as { getTemplate: GetTemplateFn }).getTemplate = function (
+    const originalGetTemplate = (env as unknown as { getTemplate: GetTemplateFn }).getTemplate.bind(env);
+    (env as unknown as { getTemplate: GetTemplateFn }).getTemplate = function (
       name: string,
       ...rest: unknown[]
     ) {
@@ -76,23 +86,26 @@ export class NunjucksEngine implements TemplateEngine {
       return originalGetTemplate(resolved, ...rest)
     }
 
-    // Register static extra globals and filters once.
-    const extraGlobals = opts.globals ?? {}
-    const extraFilters = opts.filters ?? {}
-    for (const [k, v] of Object.entries(extraGlobals)) this.env.addGlobal(k, v as never)
-    for (const [k, v] of Object.entries(extraFilters)) this.env.addFilter(k, v)
+    // Register static extra globals and filters.
+    for (const [k, v] of Object.entries(this.extraGlobals)) env.addGlobal(k, v as never)
+    for (const [k, v] of Object.entries(this.extraFilters)) env.addFilter(k, v)
+
+    return env
   }
 
   async render(source: string, ctx: TemplateContext): Promise<string> {
-    // Update context-specific globals and filters for this render call.
+    // Fresh environment per render — the shared loader avoids repeated FS
+    // setup, while per-render environments keep globals/filters isolated.
+    const env = this.createEnv()
+
     const globals = buildGlobals(ctx)
-    for (const [k, v] of Object.entries(globals)) this.env.addGlobal(k, v as never)
+    for (const [k, v] of Object.entries(globals)) env.addGlobal(k, v as never)
 
     const filters = buildFilters(ctx)
-    for (const [k, v] of Object.entries(filters)) this.env.addFilter(k, v)
+    for (const [k, v] of Object.entries(filters)) env.addFilter(k, v)
 
     return new Promise<string>((resolvePromise, reject) => {
-      this.env.renderString(source, {}, (err, result) => {
+      env.renderString(source, {}, (err, result) => {
         if (err)
           reject(err)
         else resolvePromise(result ?? '')

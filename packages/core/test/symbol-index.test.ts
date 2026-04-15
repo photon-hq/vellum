@@ -123,6 +123,43 @@ describe('inMemorySymbolIndex', () => {
     expect(mod!.exports[0]!.name).toBe('A')
   })
 
+  it('deduplicates symbols across repeated add() calls', () => {
+    const index = new InMemorySymbolIndex()
+    const v1 = makeSym({ id: 'ts:m#A', name: 'A', module: 'm', signature: 'v1' })
+    const v2 = makeSym({ id: 'ts:m#A', name: 'A', module: 'm', signature: 'v2' })
+
+    index.add([v1])
+    index.add([v2])
+
+    // byId should have the latest version
+    expect(index.symbol('ts:m#A')!.signature).toBe('v2')
+
+    // byModule should contain exactly one entry, not two
+    const mod = index.module('m')
+    expect(mod).not.toBeNull()
+    const matching = mod!.exports.filter(s => s.id === 'ts:m#A')
+    expect(matching).toHaveLength(1)
+    expect(matching[0]!.signature).toBe('v2')
+  })
+
+  it('deduplicates when symbol moves between modules', () => {
+    const index = new InMemorySymbolIndex()
+    const v1 = makeSym({ id: 'ts:m#A', name: 'A', module: 'old-module' })
+    const v2 = makeSym({ id: 'ts:m#A', name: 'A', module: 'new-module' })
+
+    index.add([v1])
+    index.add([v2])
+
+    // Old module should not contain the symbol anymore
+    const oldMod = index.module('old-module')
+    expect(oldMod === null || oldMod.exports.length === 0).toBe(true)
+
+    // New module should contain it
+    const newMod = index.module('new-module')
+    expect(newMod).not.toBeNull()
+    expect(newMod!.exports).toHaveLength(1)
+  })
+
   it('clear() removes all symbols', () => {
     const index = new InMemorySymbolIndex()
     index.add([makeSym({ id: 'ts:m#A', name: 'A' })])
