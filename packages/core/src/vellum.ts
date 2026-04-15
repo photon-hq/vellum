@@ -183,6 +183,12 @@ export class Vellum {
    * path and the `TemplateReads` captured during render (only populated
    * when a `reads` argument is passed, so callers outside watch mode are
    * unaffected).
+   *
+   * NOT safe to call concurrently when `reads` is passed. The Nunjucks
+   * engine installs per-render globals via `addGlobal` on a shared
+   * Environment, and two in-flight renders would cross-pollinate each
+   * other's `reads` closures. Watch mode renders templates sequentially
+   * for this reason.
    */
   async renderTemplate(
     file: string,
