@@ -13,7 +13,8 @@
     "@vellum-docs/core": "workspace:*",
     "@vellum-docs/engine-nunjucks": "workspace:*",
     "@vellum-docs/extractor-typescript": "workspace:*",
-    "@vellum-docs/profile-markdown": "workspace:*"
+    "@vellum-docs/profile-markdown": "workspace:*",
+    "@vercel/analytics": "^2.0.1"
   },
   "devDependencies": {
     "shiki": "^2.0.0",
