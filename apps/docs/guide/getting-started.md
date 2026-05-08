@@ -40,7 +40,8 @@ import { MarkdownProfile } from '@vellum-docs/profile-markdown'
 export default {
   root: import.meta.dirname,
   sources: {
-    ts: { include: ['src'] },
+    // include all `.ts` files in `src`, and the `@photon-ai/advanced-imessage` package
+    ts: { include: ['src'], packages: ['@photon-ai/advanced-imessage'] },
   },
   templates: 'docs-src',   // where your `.md.vel` files live
   outDir: 'docs',          // where to write rendered output
