@@ -515,4 +515,4 @@ types over structured type trees, etc.).
 
 ## License
 
-MIT
+Apache-2.0
